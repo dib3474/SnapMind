@@ -1,397 +1,220 @@
-# **프로젝트 주제**
+# SnapMind Project Plan
 
-## **SnapMind**
+## Project Summary
 
-“왜 저장했는지 잊어버리는 스크린샷/사진을 AI 기반으로 자동 분류하고 기록하는 앱”
+SnapMind is an Android app that stores screenshots/photos as searchable memory items. It uses on-device OCR, image classification, auto-tagging, memo editing, category/tag filtering, and local-first persistence.
 
----
+## Problem Statement
 
-# **프로젝트 개요**
+Users save screenshots for later reference but often forget:
 
-사용자가 스마트폰에서 스크린샷이나 사진을 찍은 후 공유 기능을 통해 앱에 저장하면:
+- why the screenshot was saved
+- what text or context was inside it
+- which category it belongs to
+- how to find it later
 
-- 스크린샷의 종류를 머신러닝으로 자동 분류
-- OCR로 텍스트 추출
-- 태그 자동 추천
-- 메모 및 저장 이유 기록
-- 검색 및 필터링 제공
+SnapMind solves this by extracting text, classifying images, generating tags, and letting users attach notes.
 
-을 수행하는 AI 기반 스크린샷/사진 기록 관리 앱.
+## Product Goals
 
----
+- Import screenshots/photos from Android share sheet.
+- Store image memories locally with reliable file/URI handling.
+- Extract OCR text with ML Kit.
+- Classify image category with TensorFlow Lite.
+- Generate and manage tags.
+- Search by OCR text, memo text, tag, category, and date.
+- Provide fast navigation with `ViewPager2`, `BottomNavigationView`, and `DrawerLayout`.
+- Keep core behavior offline and local-first.
 
-# **핵심 문제 정의**
+## Initial Release Scope
 
-사용자는:
+| Area | Included |
+| --- | --- |
+| Import | `ACTION_SEND`, app-private image copy, import confirmation |
+| Navigation | `ViewPager2`, bottom navigation, drawer quick filters |
+| OCR | ML Kit text recognition, normalized text persistence |
+| Classification | Bundled TFLite model, category confidence storage |
+| Tags | Auto-generated tags, user tags, tag create/rename/delete |
+| Search | Room-backed query by OCR/memo/tag/category/date |
+| Memo | Edit memo, pin, archive, delete memory |
+| Storage | Local Room DB and app-private image files |
 
-- 유튜브
-- 강의자료
-- 코드 에러
-- 쇼핑
-- 지도
-- 링크
+## Out of Scope for Initial Release
 
-등을 저장하기 위해 스크린샷을 자주 찍지만,
+- User accounts.
+- Cloud sync.
+- Server-side image processing.
+- Required OpenAI/YouTube/Notion integration.
+- In-app model training.
+- Multi-device backup.
 
-시간이 지나면:
+## Core Feature Plan
 
-- 왜 저장했는지
-- 어떤 내용인지
-- 어디에 쓰려고 했는지
+### 1. Screenshot/Photo Import
 
-기억하지 못하는 문제가 존재함.
+Users share an image into SnapMind. The app validates the input, copies the image into app-private storage, creates a `MemoryItem`, and queues processing.
 
-본 앱은 이를 해결하기 위해:
+Implementation docs:
 
-- 자동 분류
-- 자동 태깅
-- 검색 기능
-- 메모 기록
+- `docs/features/screenshot-sharing.md`
+- `docs/specs/permission-storage-spec.md`
+- `docs/architecture/background-processing.md`
 
-을 제공함.
+### 2. Main Navigation
 
----
+The app shell uses `ViewPager2` for swipe navigation and `BottomNavigationView` for direct access.
 
-# **앱 핵심 기능**
+Main pages:
 
-## **1. 스크린샷 공유 저장 기능**
+| Index | Page | Purpose |
+| ---: | --- | --- |
+| 0 | Memory | Saved screenshots/photos |
+| 1 | Search | Query and structured filters |
+| 2 | Tags | Category/tag browsing |
+| 3 | Memo | Memo-focused entry point |
+| 4 | Settings | App/model/debug settings |
 
-### **기능 설명**
+Implementation docs:
 
-사용자가 갤러리 또는 스크린샷 화면에서 “공유” 버튼을 눌러 앱으로 이미지를 전달.
+- `docs/features/swipe-navigation.md`
+- `docs/specs/navigation-flow.md`
+- `docs/specs/screen-specs.md`
 
-### **사용 기술**
+### 3. Drawer Category/Tag Filtering
 
-- Android Intent
-- ACTION_SEND
-- 외부 앱 연동
+The Memory page uses `DrawerLayout` as a fast filtering menu. A left-edge swipe opens categories and popular tags. Selecting `Code`, `Shopping`, `Map`, or a tag filters the main list immediately.
 
-### **평가 항목**
+Implementation docs:
 
-- 외부 APP 연동
-- Intent 데이터 전달
+- `docs/features/drawer-filtering.md`
+- `docs/features/search-filter.md`
 
----
+### 4. OCR Processing
 
-# **2. 머신러닝 기반 이미지 자동 분류**
+ML Kit extracts text from imported screenshots/photos. OCR text is normalized, stored, and used for search and tag generation.
 
-## **기능 설명**
+Implementation docs:
 
-이미지를 다음 카테고리로 자동 분류:
+- `docs/features/ocr-processing.md`
+- `docs/architecture/ai-pipeline.md`
 
-- video
-- code
-- shopping
-- text
-- map
-- chat
-- meme
+### 5. Image Classification
 
-### **사용 기술**
+A bundled TFLite model classifies memories into categories such as `chat`, `receipt`, `document`, `product`, `travel`, `food`, `event`, `code`, and `unknown`.
 
-- TensorFlow Lite
-- CNN 기반 간단한 이미지 분류 모델
+Implementation docs:
 
-### **학습 방식**
+- `docs/features/ai-image-classification.md`
+- `docs/specs/ml-training-spec.md`
 
-직접 수집한 이미지 데이터셋 사용.
+### 6. Auto-Tagging and Tag Management
 
-### **평가 항목**
+Tags are generated from OCR text, classification labels, and deterministic rules. Users can also create, rename, delete, assign, and remove tags.
 
-- 머신러닝
+Implementation docs:
 
----
+- `docs/features/auto-tagging.md`
+- `docs/features/drawer-filtering.md`
 
-# **3. OCR 텍스트 추출**
+### 7. Search and Filter
 
-## **기능 설명**
+Search supports OCR text, memo body, tag name, category label, and date range. Search results come from Room `Flow`.
 
-스크린샷/사진 내 텍스트를 자동 추출하여:
+Implementation docs:
 
-- 제목 추천
-- 키워드 생성
-- 검색 기능
+- `docs/features/search-filter.md`
+- `docs/architecture/database-design.md`
 
-에 활용.
+### 8. Memo Management
 
-### **사용 기술**
+Users can record why a screenshot was saved, edit notes, pin memories, archive items, or permanently delete them.
 
-- ML Kit Text Recognition
+Implementation docs:
 
-### **예시**
+- `docs/features/memo-management.md`
 
-유튜브 스크린샷:
+## Architecture Plan
 
-- 영상 제목 추출
+| Layer | Responsibility |
+| --- | --- |
+| UI | Activity/Fragment or View system screens, rendering state and forwarding events |
+| ViewModel | `StateFlow` UI state, event handling, coroutine orchestration |
+| Domain | Use cases and domain models |
+| Repository | Coordinates Room, file storage, OCR, classifier, tagging, and optional API |
+| Local Data | Room entities, DAOs, migrations |
+| AI | ML Kit OCR, TFLite classifier, tag rule engine |
 
-코드 에러 화면:
+Primary architecture docs:
 
-- Exception 이름 추출
+- `docs/architecture/system-overview.md`
+- `docs/architecture/android-architecture.md`
+- `docs/architecture/database-design.md`
+- `docs/architecture/ai-pipeline.md`
+- `docs/architecture/background-processing.md`
+- `docs/architecture/privacy-security.md`
 
----
+## Technology Stack
 
-# **4. 자동 태그 추천 기능**
-
-## **기능 설명**
-
-OCR 결과 + 이미지 분류 결과를 기반으로:
-
-- #과제
-- #영상
-- #버그
-- #구매예정
-- #공부
-
-등 자동 태그 추천.
-
-### **사용 기술**
-
-- 간단한 텍스트 키워드 분석
-- OpenAI API 활용 가능
-
-### **API 활용 예시**
-
-“이 스크린샷은 React 에러 해결 관련 이미지입니다.”
-
-### **평가 항목**
-
-- API 활용
-
----
-
-# **5. 메모 및 저장 목적 기록**
-
-## **기능 설명**
-
-사용자가:
-
-- 왜 저장했는지
-- 나중에 할 일
-- 참고 목적
-
-등을 간단하게 메모 가능.
-
-### **예시**
-
-- “나중에 알고리즘 공부”
-- “리액트 에러 해결 참고”
-- “다음에 살 물건”
-
----
-
-# **6. 검색 및 필터 기능**
-
-## **기능 설명**
-
-사용자가:
-
-- 태그
-- 제목
-- 날짜
-- 카테고리
-
-기준으로 검색 가능.
-
-### **사용 기술**
-
-- RecyclerView
-- SearchView
-- Room DB
-
----
-
-# **7. 저장 기록 관리 기능**
-
-## **기능 설명**
-
-저장된 이미지:
-
-- 날짜별 정렬
-- 카테고리별 정렬
-- 최근 저장 목록
-
-등 제공.
-
-### **사용 기술**
-
-- Room Database
-- RecyclerView
-
-### **평가 항목**
-
-- DB 활용
-- Jetpack Library
-
----
-
-# **앱 구조 (Activity 구성)**
-
-## **1. HomeActivity**
-
-- 최근 저장 목록
-- 카테고리별 보기
-
----
-
-## **2. AddScreenshotActivity**
-
-- 공유 Intent로 이미지 수신
-- OCR 수행
-- ML 분류 수행
-- 태그 추천
-
----
-
-## **3. DetailActivity**
-
-- 메모 수정
-- 태그 수정
-- 이미지 상세 보기
-
----
-
-## **4. SearchActivity**
-
-- 검색
-- 필터링
-
----
-
-# **사용 예정 기술 정리**
-
-| **분야** | **사용 기술** |
+| Area | Technology |
 | --- | --- |
 | Language | Kotlin |
-| 비동기 처리 | Coroutine |
-| 이미지 로딩 | Glide |
-| API 통신 | Retrofit |
-| DB | Room |
-| OCR | ML Kit |
-| 머신러닝 | TensorFlow Lite |
-| UI | RecyclerView / Fragment |
-| 외부 앱 연동 | Intent |
+| Architecture | MVVM, Repository pattern, Use cases |
+| Async | Coroutine, Flow |
+| UI | Android View system, Fragment, RecyclerView, ViewPager2 |
+| Navigation | BottomNavigationView, DrawerLayout, Navigation routes |
+| Database | Room |
+| File Storage | App-private storage, ContentResolver |
+| OCR | ML Kit Text Recognition |
+| ML | TensorFlow Lite |
+| Network | Retrofit for optional config/metadata APIs |
+| DI | Hilt |
+| Background Work | Coroutine for foreground work, WorkManager for durable processing |
+| Testing | JUnit, Room tests, ViewModel tests, instrumented UI tests |
 
----
+## Data Lifecycle
 
-# **Jetpack Library 활용 계획**
+```text
+Share Intent / Picker URI
+  -> permission and MIME validation
+  -> app-private image copy
+  -> MemoryItem insert
+  -> background processing request
+  -> OCR extraction
+  -> TFLite classification
+  -> auto-tagging
+  -> Room updates
+  -> searchable/filterable UI
+```
 
-## **사용 예정**
+## Implementation Order
 
-- RecyclerView
-- Fragment
-- ViewModel
-- Navigation Component
+1. Project package structure and dependency setup.
+2. Room schema v1 and DAOs.
+3. App-private image storage and import flow.
+4. Main app shell with `ViewPager2`, bottom navigation, and drawer filter shell.
+5. OCR processing pipeline.
+6. TFLite classification pipeline.
+7. Auto-tagging and tag management.
+8. Search/filter queries.
+9. Memo edit, archive, pin, delete.
+10. Testing, performance, privacy, and release hardening.
 
-### **평가 항목**
+## Risk Register
 
-Jetpack Library 3개 이상 활용 가능.
+| Risk | Impact | Mitigation |
+| --- | --- | --- |
+| Large images cause memory pressure | Crash or slow import | Decode with bounds, copy original separately, process downsampled bitmap |
+| URI permission expires | Missing image after import | Copy into app-private storage during import |
+| OCR/classification takes too long | Poor UX | Use background queue and visible processing status |
+| Gesture conflicts between drawer and pager | Navigation feels broken | Reserve left-edge swipe for drawer, content swipe for pager |
+| Tag noise | Search/filter quality drops | Cap generated tags and allow user removal |
+| Sensitive OCR text exposure | Privacy issue | Keep processing local, avoid remote upload by default |
 
----
+## Documentation Maintenance
 
-# **Coroutine 활용**
+- Feature scope lives in `docs/features/`.
+- Implementation status lives in `docs/todos/` and `docs/progress/`.
+- Technical contracts live in `docs/specs/`.
+- Architecture decisions live in `docs/architecture/`.
+- Update this plan only when project direction changes.
 
-## **활용 위치**
-
-- OCR 처리
-- DB 저장
-- API 요청
-- 이미지 분석
-
-### **평가 항목**
-
-- Coroutine 활용
-
----
-
-# **Retrofit / Glide 활용**
-
-## **Retrofit**
-
-- OpenAI API
-- YouTube API
-
-## **Glide**
-
-- 저장 이미지 썸네일 로딩
-
-### **평가 항목**
-
-- 다운로드 매니저 활용
-
----
-
-# **API 활용 계획**
-
-## **후보 API**
-
-데이터 불러오는 API가 편함
-
-### **1. OpenAI API**
-
-OCR 텍스트 기반:
-
-- 자동 설명 생성
-- 태그 추천
-- 저장 목적 추정
-
----
-
-### **2. YouTube API**
-
-유튜브 링크/제목 자동 저장.
-
----
-
-### **3. Notion API (선택)**
-
-메모 외부 Export 기능.
-
----
-
-# **머신러닝 구현 계획**
-
-## **목표**
-
-간단한 이미지 분류 모델 직접 학습 후 앱에 적용.
-
----
-
-## **데이터셋**
-
-직접 수집한 스크린샷:
-
-- video
-- code
-- shopping
-- text
-- map
-- meme
-
-카테고리별 저장 후 학습.
-
----
-
-## **모델 구조**
-
-간단한 CNN 기반 이미지 분류 모델.
-
----
-
-## **학습 환경**
-
-Python + TensorFlow/Keras.
-
----
-
-## **앱 적용**
-
-TensorFlow Lite 변환 후 Android 적용.
-
----
-
-# **기대 효과**
-
-- 스크린샷 관리 효율 향상
-- 저장 목적 기억 보조
-- 빠른 검색 및 분류 제공
-- 실사용 가능한 AI 기반 기록 앱 구현

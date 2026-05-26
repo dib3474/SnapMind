@@ -93,6 +93,7 @@ No API dependency for initial release. Future remote model config may use `Model
 - Android Bitmap APIs.
 - Room.
 - Coroutine dispatchers.
+- WorkManager processing queue.
 
 ## TODO Checklist
 
@@ -119,4 +120,3 @@ Not Started
 - Add remote model config.
 - Add user correction feedback for category quality.
 - Add multiple specialized models for screenshots versus camera photos.
-

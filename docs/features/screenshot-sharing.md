@@ -93,8 +93,11 @@ This feature does not run OCR directly. It triggers processing through the impor
 
 - Android intent filters.
 - ContentResolver.
+- App-private file storage.
+- Permission/storage policy.
 - Room.
 - Coroutine dispatchers.
+- WorkManager processing queue.
 - Navigation.
 
 ## TODO Checklist
@@ -102,6 +105,7 @@ This feature does not run OCR directly. It triggers processing through the impor
 - [ ] Add image share intent filters to `AndroidManifest.xml`.
 - [ ] Implement shared intent parser.
 - [ ] Implement app-private image copy helper.
+- [ ] Validate MIME type with allowlist.
 - [ ] Create import confirmation UI.
 - [ ] Create `ImportMemoryUseCase`.
 - [ ] Insert `MemoryItemEntity` with pending statuses.
@@ -124,4 +128,3 @@ Not Started
 - Add background batch import with notification progress.
 - Add image hash-based duplicate detection.
 - Support direct gallery picker import from inside the app.
-

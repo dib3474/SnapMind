@@ -93,6 +93,7 @@ No API dependency.
 - ML Kit Text Recognition.
 - Room.
 - Coroutine dispatchers.
+- WorkManager processing queue.
 - ContentResolver/file storage.
 
 ## TODO Checklist
@@ -121,4 +122,3 @@ Not Started
 - Add OCR language hints.
 - Add bounding box display for matched text.
 - Add FTS table for large datasets.
-

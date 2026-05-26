@@ -26,10 +26,13 @@
 - [ ] Add Hilt dependency and application class.
 - [ ] Add Room dependency and database skeleton.
 - [ ] Add Retrofit/OkHttp dependencies.
+- [ ] Add WorkManager dependency.
 - [ ] Add ML Kit OCR dependency.
 - [ ] Add TensorFlow Lite dependency.
 - [ ] Define `AppResult` and `AppError`.
 - [ ] Define dispatcher provider.
+- [ ] Define app-private image storage helper.
+- [ ] Define privacy-safe logging policy.
 - [ ] Add base navigation routes.
 - [ ] Add ViewPager2 and BottomNavigationView app shell.
 - [ ] Add DrawerLayout quick filtering shell.
@@ -40,6 +43,8 @@
 ### P0
 
 - [ ] Room schema baseline.
+- [ ] Permission/storage import policy.
+- [ ] Background processing queue.
 - [ ] Main swipe/bottom navigation shell.
 - [ ] Drawer category/tag quick filtering.
 - [ ] Screenshot share import.
@@ -60,6 +65,7 @@
 - [ ] FTS search migration.
 - [ ] Batch import background notification.
 - [ ] Model update strategy.
+- [ ] Optional backup/export policy.
 
 ## Cross-Team Dependencies
 
@@ -67,6 +73,8 @@
 | --- | --- | --- |
 | Room schema v1 | Backend/Data | OCR, search, memo |
 | Image storage strategy | Android/Data | import, OCR, classification |
+| Background processing strategy | Android/Data/AI | OCR, classification, auto-tagging |
+| Privacy/security policy | PM/Android | release readiness, API features |
 | TFLite label list | AI | classification, category filters |
 | Tag taxonomy | AI/Product | auto-tagging, search filters |
 | Screen navigation | Frontend | all feature screens |
@@ -81,3 +89,6 @@
 - [ ] ViewModel state tests.
 - [ ] Import flow instrumentation test.
 - [ ] Search/filter instrumentation test.
+- [ ] Worker status transition tests.
+- [ ] Permission/storage import tests.
+- [ ] Privacy-sensitive logging review.

@@ -16,6 +16,7 @@ Define how SnapMind ingests image memories, processes them with OCR and AI class
 | File Storage | Stores copied image files or persistent URI references |
 | ML Kit OCR | Extracts text from screenshots/photos |
 | TensorFlow Lite | Performs on-device image classification |
+| WorkManager | Runs durable OCR/classification/tagging work after import |
 | Retrofit API | Reserved for optional remote metadata/model config endpoints |
 
 ## Primary Data Lifecycle
@@ -43,4 +44,12 @@ Define how SnapMind ingests image memories, processes them with OCR and AI class
 - OCR/classification status must be stored so interrupted processing can resume.
 - Search should work offline.
 - App must handle revoked URI permissions and missing files gracefully.
+- Imported image files and OCR text are private by default.
+- Durable processing should survive app backgrounding where possible.
 
+## Related Documents
+
+- `docs/specs/permission-storage-spec.md`
+- `docs/architecture/background-processing.md`
+- `docs/architecture/privacy-security.md`
+- `docs/specs/testing-strategy.md`

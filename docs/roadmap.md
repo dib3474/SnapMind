@@ -21,12 +21,15 @@ SnapMind helps users save screenshots/photos, extract text, classify image conte
 
 - [ ] App supports Android share intent for image input.
 - [ ] Imported images are stored with stable local URIs.
+- [ ] App does not request broad storage permissions for initial import flows.
 - [ ] OCR runs asynchronously and persists recognized text blocks.
+- [ ] Durable processing status is tracked through Room and retryable.
 - [ ] TFLite classification runs off the main thread.
 - [ ] Search returns results by OCR text, memo text, tags, and category.
 - [ ] Room migrations are defined for every schema change.
 - [ ] ViewModels expose stable UI state models.
 - [ ] Error states are visible and retryable.
+- [ ] Release logging avoids OCR text, memo body, source URI, and file path leaks.
 - [ ] Unit tests cover repositories, use cases, and tag rules.
 - [ ] Instrumented tests cover import, search, and memo edit flows.
 

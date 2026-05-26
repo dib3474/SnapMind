@@ -12,7 +12,7 @@ This documentation directory is the team source of truth for architecture, featu
 | `features/` | One implementation-ready specification per app feature |
 | `todos/` | Master dashboard, team-specific TODOs, blockers, bug tracker |
 | `progress/` | Daily logs, weekly reports, implementation history, milestone and feature status |
-| `specs/` | Screen, navigation, schema, API, and model training specifications |
+| `specs/` | Screen, navigation, schema, permissions/storage, testing, API, and model training specifications |
 
 ## Status Labels
 
@@ -72,6 +72,9 @@ Each feature spec must include:
 | Android UI | `specs/screen-specs.md`, `todos/frontend-todo.md` |
 | ViewModel and Repository | `architecture/android-architecture.md`, feature specs |
 | Room DB | `architecture/database-design.md`, `specs/room-schema.md`, `todos/backend-todo.md` |
+| Permissions and Storage | `specs/permission-storage-spec.md`, `architecture/privacy-security.md` |
+| Background Processing | `architecture/background-processing.md`, `architecture/ai-pipeline.md` |
 | Retrofit API | `architecture/api-design.md`, `specs/retrofit-spec.md` |
 | OCR and ML | `architecture/ai-pipeline.md`, `specs/ml-training-spec.md`, `todos/ai-todo.md` |
+| Testing | `specs/testing-strategy.md`, `todos/master-todo.md` |
 | Project Tracking | `todos/master-todo.md`, `progress/weekly-progress.md`, `progress/milestone-status.md` |

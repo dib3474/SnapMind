@@ -30,9 +30,20 @@ Backend in this project means local data, repositories, Room, file storage, and 
 
 - [ ] Define app-private image directory.
 - [ ] Implement content URI copy.
+- [ ] Implement MIME allowlist validation.
 - [ ] Implement safe filename generation.
+- [ ] Handle missing app-private image files.
 - [ ] Handle image delete cleanup.
 - [ ] Add duplicate detection placeholder.
+
+## Background Work
+
+- [ ] Add WorkManager dependency.
+- [ ] Implement `MemoryProcessingWorker`.
+- [ ] Persist processing status transitions.
+- [ ] Add retry use case.
+- [ ] Add cancellation on permanent delete.
+- [ ] Add cleanup worker for orphan files if needed.
 
 ## Retrofit
 
@@ -42,9 +53,15 @@ Backend in this project means local data, repositories, Room, file storage, and 
 - [ ] Add network error mapping.
 - [ ] Keep API features optional for initial release.
 
+## Privacy/Security
+
+- [ ] Confirm backup policy.
+- [ ] Add privacy-safe logging conventions.
+- [ ] Ensure no image/OCR/memo upload in initial release.
+- [ ] Add cleanup verification for permanent delete.
+
 ## Status
 
 Current Status: Not Started
 
 Progress: 0%
-

@@ -14,6 +14,7 @@ com.example.snapmind
 ├── core
 │   ├── common
 │   ├── coroutine
+│   ├── worker
 │   ├── result
 │   └── ui
 ├── data
@@ -26,6 +27,9 @@ com.example.snapmind
 │   │   └── dto
 │   ├── repository
 │   └── file
+├── worker
+│   ├── MemoryProcessingWorker.kt
+│   └── CleanupWorker.kt
 ├── domain
 │   ├── model
 │   ├── repository
@@ -71,6 +75,7 @@ data class MemoryListUiState(
 | UI | `lifecycleScope` for one-off UI collection | Main |
 | ViewModel | `viewModelScope` | Main for state, injected dispatchers for work |
 | Repository | suspend functions and `Flow` | IO |
+| Worker | WorkManager coroutine worker | Injected dispatchers |
 | OCR | suspend processor | Default or dedicated CPU dispatcher |
 | TFLite | suspend processor | Default or dedicated CPU dispatcher |
 | Room | DAO suspend/Flow | IO handled by Room, call from IO where batching |
@@ -100,6 +105,7 @@ Required modules:
 - `RepositoryModule`
 - `AiModule`
 - `DispatcherModule`
+- `WorkerModule`
 
 ## Error Model
 
@@ -122,3 +128,10 @@ Common errors:
 - `DatabaseError`
 - `NetworkUnavailable`
 
+## Background Work
+
+Use WorkManager for durable OCR/classification/tagging work after import. See `docs/architecture/background-processing.md`.
+
+## Privacy Boundary
+
+UI and logs must not expose OCR text, memo body, source URI, or absolute image paths unnecessarily. See `docs/architecture/privacy-security.md`.
