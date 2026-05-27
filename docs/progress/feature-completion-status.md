@@ -18,12 +18,12 @@ A feature is `Completed` only when:
 | Feature | Spec | Status | Progress | Implementation | Tests | Docs Updated | Blocker |
 | --- | --- | --- | ---: | --- | --- | --- | --- |
 | Swipe Navigation | `docs/features/swipe-navigation.md` | Not Started | 0% | `[ ]` | `[ ]` | `[x]` | None |
-| Drawer Filtering | `docs/features/drawer-filtering.md` | Not Started | 0% | `[ ]` | `[ ]` | `[x]` | Tags schema pending |
+| Drawer Filtering | `docs/features/drawer-filtering.md` | Not Started | 0% | `[ ]` | `[ ]` | `[x]` | Tag implementation pending |
 | Screenshot Sharing | `docs/features/screenshot-sharing.md` | Not Started | 0% | `[ ]` | `[ ]` | `[x]` | None |
 | OCR Processing | `docs/features/ocr-processing.md` | Not Started | 0% | `[ ]` | `[ ]` | `[x]` | None |
 | AI Image Classification | `docs/features/ai-image-classification.md` | Not Started | 0% | `[ ]` | `[ ]` | `[x]` | TFLite model not selected |
 | Auto-Tagging | `docs/features/auto-tagging.md` | Not Started | 0% | `[ ]` | `[ ]` | `[x]` | Tag taxonomy pending |
-| Search and Filter | `docs/features/search-filter.md` | Not Started | 0% | `[ ]` | `[ ]` | `[x]` | Room schema pending |
+| Search and Filter | `docs/features/search-filter.md` | Not Started | 0% | `[ ]` | `[ ]` | `[x]` | Room implementation pending |
 | Memo Management | `docs/features/memo-management.md` | Not Started | 0% | `[ ]` | `[ ]` | `[x]` | Memory detail pending |
 
 ## Feature Review Template

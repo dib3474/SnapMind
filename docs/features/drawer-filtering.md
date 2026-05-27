@@ -2,26 +2,28 @@
 
 ## Goal
 
-Use `DrawerLayout` as a fast category/tag filtering menu for the Memory home screen. Users can open the left drawer with an edge swipe and immediately filter the main memory list by saved categories such as `Shopping`, `Code`, `Map`, or by popular tags.
+Use `DrawerLayout` as a left-side utility and quick navigation menu for the main app shell. Users can open the drawer with the toolbar menu button or a left-edge swipe, then jump to trash, PDF export, developer info, top tags, or category/tag filters.
 
 This behaves like folder navigation in email apps: selecting a drawer item changes the visible list scope immediately.
 
 ## User Scenario
 
 1. User opens SnapMind on the Memory page.
-2. User swipes from the left edge of the screen.
-3. App opens a navigation drawer.
-4. Drawer shows all saved categories and popular tags.
-5. User taps `Code`.
+2. User taps the toolbar drawer button or swipes from the left edge.
+3. App opens the left-side drawer.
+4. Drawer shows utility actions plus top tags/category shortcuts.
+5. User taps a popular tag or `Code` category.
 6. Drawer closes.
-7. Main memory list immediately shows screenshots/photos tagged or classified as `Code`.
-8. User can manage the selected tag/category from the drawer or detail screen.
+7. App navigates to the relevant tab/list with the selected filter applied.
+8. User can manage tags from the drawer or detail screen.
 
 ## Functional Requirements
 
-- Use `DrawerLayout` around the main Memory page content.
-- Open drawer by swiping from the left screen edge.
+- Use `DrawerLayout` around the main app shell.
+- Open drawer by tapping the toolbar menu button or swiping from the left screen edge.
+- Implement the drawer with `layout_gravity="start"` so it opens left-to-right in LTR layouts.
 - Provide a visible drawer/menu button for accessibility and discoverability.
+- Provide utility actions for trash, PDF export, developer info, and top-3 tag shortcuts.
 - Show saved categories in the drawer.
 - Show popular tags in the drawer.
 - Show item counts for categories/tags where available.
@@ -38,8 +40,9 @@ This behaves like folder navigation in email apps: selecting a drawer item chang
 
 | Section | Items | Source |
 | --- | --- | --- |
-| Quick Filters | All, Unprocessed, Favorites/Pinned, Archived | `memory_items` status fields |
-| Categories | Shopping, Code, Map, Receipt, Document, Chat, Unknown | `classifications.label` and category mapping |
+| Utility Actions | Trash, PDF export, developer info | Navigation routes |
+| Quick Filters | All, Unprocessed, Favorites, Trash | `memory_items` status fields |
+| Categories | Chat, Receipt, Code, Shopping, Travel, Food, Document, YouTube, Unknown | `classifications.label` and category mapping |
 | Popular Tags | Most-used generated/user tags | `tags` and `memory_tag_cross_refs` |
 | Tag Management | Create tag, Manage tags | tag management screen/dialog |
 
@@ -55,10 +58,11 @@ This behaves like folder navigation in email apps: selecting a drawer item chang
 
 - `DrawerLayout`
   - main content:
-    - Memory list toolbar
-    - active filter chip row
-    - memory thumbnail/list content
+    - main toolbar
+    - `ViewPager2` content
+    - `BottomNavigationView`
   - drawer content:
+    - Utility Actions section
     - Quick Filters section
     - Categories section
     - Popular Tags section
@@ -67,13 +71,13 @@ This behaves like folder navigation in email apps: selecting a drawer item chang
 ## Processing Flow
 
 ```text
-User swipes from left edge
+User taps toolbar menu or swipes from left edge
   -> DrawerLayout opens
-  -> User taps category/tag
-  -> ViewModel updates MemoryFilters
+  -> User taps utility/category/tag item
+  -> Navigation or ViewModel updates selected destination/filter
   -> DrawerLayout closes
-  -> Room Flow emits filtered memory list
-  -> Memory list renders filtered results
+  -> Room Flow emits filtered list when a filter was selected
+  -> Target screen renders filtered results
 ```
 
 ## Data Flow
@@ -115,8 +119,8 @@ No API dependency.
 - User selects a tag with zero visible memories after other filters are applied.
 - Auto-tagging creates a new tag while drawer is open.
 - User deletes the currently selected tag.
-- User opens drawer from Search tab instead of Memory tab.
-- Left edge swipe conflicts with Android system back gesture.
+- User opens drawer from any bottom tab.
+- Left edge swipe conflicts with horizontal pager gestures and Android back gesture.
 - Very long tag names need truncation.
 
 ## Dependencies
@@ -132,9 +136,9 @@ No API dependency.
 ## TODO Checklist
 
 - [ ] Add `androidx.drawerlayout:drawerlayout` dependency if not already available transitively.
-- [ ] Define drawer layout for Memory page.
+- [ ] Define drawer layout around `MainActivity`.
 - [ ] Add drawer open button in Memory toolbar.
-- [ ] Add left edge swipe behavior.
+- [ ] Add left-edge swipe behavior.
 - [ ] Define `DrawerFilterItem` UI model.
 - [ ] Query category list and counts.
 - [ ] Query popular tags and counts.
@@ -160,7 +164,6 @@ Not Started
 ## Future Improvements
 
 - Add custom drawer sorting.
-- Add pinned favorite tags.
+- Add favorite tag shortcuts.
 - Add saved filter presets.
 - Add drag-and-drop tag organization.
-

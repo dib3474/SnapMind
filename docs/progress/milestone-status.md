@@ -17,7 +17,7 @@
 | M3 | AI Classification | Not Started | 0% | TFLite category predictions stored and visible |
 | M4 | Auto-Tagging | Not Started | 0% | Tags generated from OCR/classification and filterable |
 | M5 | Search and Filter | Not Started | 0% | Search/filter works across OCR, memo, tags, category, date |
-| M6 | Memo Management | Not Started | 0% | Memo edit, pin, archive, delete workflows complete |
+| M6 | Memo Management | Not Started | 0% | Memo edit, favorite, trash, restore, permanent delete workflows complete |
 | M7 | Stabilization | Not Started | 0% | Core tests pass, performance acceptable, critical bugs closed |
 
 ## Milestone Template

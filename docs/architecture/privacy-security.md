@@ -9,8 +9,10 @@ SnapMind handles sensitive user-created visual data. The default policy is local
 ## Core Principles
 
 - Process OCR and image classification on device by default.
-- Do not upload image bytes in the initial release.
-- Do not upload OCR text, memo text, or tags without explicit future user consent.
+- Keep the app usable without any remote API.
+- Upload downsampled image bytes only for user-enabled Vision/Gemini remote enrichment.
+- Upload OCR-derived YouTube search text only when the YouTube deep-link feature is enabled.
+- Do not upload memo text or user-created tags in the initial release.
 - Store imported images in app-private storage.
 - Keep Room data local to the device.
 - Avoid logging sensitive content.
@@ -25,7 +27,7 @@ SnapMind handles sensitive user-created visual data. The default policy is local
 | Tags | Medium | Room |
 | Classification label | Low/Medium | Room |
 | Source URI | Medium | Room/debug metadata |
-| Model config | Low | Preferences/Room metadata |
+| API keys / remote settings | High | BuildConfig for demo keys or private preferences for runtime keys |
 
 ## Logging Rules
 
@@ -44,10 +46,12 @@ Debug builds may log IDs, counts, statuses, and non-sensitive error codes.
 
 Initial release:
 
-- No image upload.
-- No OCR text upload.
-- No memo upload.
-- Retrofit may only fetch optional model/config metadata or send non-sensitive aggregate metadata if explicitly enabled.
+- Local OCR and TFLite classification never require network.
+- Vision API may upload a bounded, downsampled, re-encoded image only after remote enrichment is enabled.
+- Gemini API may upload a bounded, downsampled, re-encoded image only after memo recommendation is enabled.
+- YouTube Data API may upload the selected OCR-derived candidate title only after YouTube deep-linking is enabled.
+- Do not upload memo body, user-created tags, source URI, or app-private file paths.
+- Do not include Vision `TEXT_DETECTION`; ML Kit handles OCR locally.
 
 Future remote features must add:
 
@@ -99,7 +103,7 @@ If backup is enabled later:
 | --- | --- |
 | Source URI permission revoked | Copy image into app-private storage |
 | Sensitive OCR text leaked through logs | Redact logs and disable sensitive logging in release |
-| Accidental remote upload | Keep API layer optional and deny image/text upload by default |
+| Accidental remote upload | Keep API layer optional, gate it behind settings, and test disabled-path defaults |
 | File path exposed to another app | Use FileProvider only for explicit share/export features |
 | Deleted memory leaves file behind | Add cleanup path and periodic orphan file check |
 | Untrusted shared file content | MIME allowlist and safe decode handling |
@@ -123,7 +127,6 @@ These are out of scope until baseline memory management is complete.
 - [ ] Add release logging rules.
 - [ ] Add sensitive data redaction helper.
 - [ ] Add file cleanup verification.
-- [ ] Add no-upload rule to API review checklist.
+- [ ] Add remote-enrichment opt-in and payload minimization checks to API review checklist.
 - [ ] Add privacy review before any remote metadata feature.
 - [ ] Add orphan file cleanup task if permanent delete can fail.
-

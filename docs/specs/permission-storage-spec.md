@@ -151,7 +151,7 @@ Do not request broad storage permissions for initial release.
 - Never execute or parse non-image files as images.
 - Never store external URI credentials or tokens.
 - Never log full OCR text or absolute file paths in release builds.
-- Do not upload image bytes unless a future feature explicitly requires user consent.
+- Do not upload image bytes except through user-enabled Vision/Gemini remote enrichment; always upload a bounded, re-encoded copy rather than the original app-private file.
 
 ## TODO Checklist
 
@@ -164,4 +164,3 @@ Do not request broad storage permissions for initial release.
 - [ ] Add tests for unsupported MIME type.
 - [ ] Add tests for copy failure.
 - [ ] Add tests for file deletion path.
-

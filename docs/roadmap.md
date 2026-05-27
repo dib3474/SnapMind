@@ -13,8 +13,8 @@ SnapMind helps users save screenshots/photos, extract text, classify image conte
 | M2 OCR Pipeline | ML Kit OCR extraction, persistence, and searchable text | Not Started | 0% |
 | M3 AI Classification | TFLite image category inference and confidence storage | Not Started | 0% |
 | M4 Auto-Tagging | Rule-based and AI-assisted tag generation | Not Started | 0% |
-| M5 Search and Filter | Full-text-like search, tag/category/date filters | Not Started | 0% |
-| M6 Memo Management | Manual memo editing, pin/archive/delete workflows | Not Started | 0% |
+| M5 Search and Filter | Room FTS search, tag/category/date filters | Not Started | 0% |
+| M6 Memo Management | Manual memo editing, favorite/trash/permanent delete workflows | Not Started | 0% |
 | M7 Stabilization | Offline behavior, performance tuning, tests, crash hardening | Not Started | 0% |
 
 ## Release Readiness Checklist
@@ -40,7 +40,7 @@ SnapMind helps users save screenshots/photos, extract text, classify image conte
 3. Data ingestion: screenshot sharing and photo import.
 4. Processing: OCR, classification, auto-tagging.
 5. Retrieval: search and filter.
-6. Curation: memo management, archive, delete.
+6. Curation: memo management, favorite, trash, permanent delete.
 7. Quality: tests, performance, accessibility, crash handling.
 
 ## Out of Scope for Initial Release

@@ -4,10 +4,10 @@ Frontend means Android UI, navigation, ViewModels, UI models, and user-visible s
 
 ## Navigation
 
-- [ ] Define routes for memory list, detail, import, search, settings.
+- [ ] Define routes for home, favorites, tags, settings, detail, import, search, trash, PDF export, and developer info.
 - [ ] Add `ViewPager2` main app shell.
 - [ ] Add `BottomNavigationView` main navigation.
-- [ ] Add `DrawerLayout` to Memory page for quick filters.
+- [ ] Add left-side `DrawerLayout` around the main app shell for utilities and quick filters.
 - [ ] Define drawer gesture priority with `ViewPager2`.
 - [ ] Define stable bottom navigation item IDs.
 - [ ] Synchronize pager swipes with bottom navigation selection.
@@ -24,9 +24,10 @@ Frontend means Android UI, navigation, ViewModels, UI models, and user-visible s
 - [ ] Memory detail screen.
 - [ ] Search/filter screen.
 - [ ] Tag browser screen.
-- [ ] Drawer filter menu.
+- [ ] Left drawer utility/filter menu.
 - [ ] Tag management screen/dialog.
-- [ ] Memo hub screen.
+- [ ] Favorites screen.
+- [ ] Trash screen.
 - [ ] Settings/debug processing screen if needed.
 
 ## UI State
@@ -48,7 +49,7 @@ Frontend means Android UI, navigation, ViewModels, UI models, and user-visible s
 - [ ] User tag create/rename/delete.
 - [ ] Manual tag assignment/removal from memory detail.
 - [ ] Memo edit/save.
-- [ ] Pin/archive/delete.
+- [ ] Favorite/trash/permanent delete.
 
 ## Accessibility and UX
 

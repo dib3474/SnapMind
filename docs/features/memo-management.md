@@ -22,7 +22,7 @@ Allow users to add, edit, favorite, and delete personal notes attached to saved 
 - Search memo content via Room FTS.
 - Mark memories as favorite (즐겨찾기).
 - Soft-delete memory to trash (휴지통); restore from trash.
-- Permanently delete memory item, image file, OCR, Vision labels, classification, memo, and tag refs.
+- Permanently delete memory item, image file, OCR, Vision labels, classification, memo, YouTube link, and tag refs.
 - Confirm destructive delete.
 
 ## Non-Functional Requirements
@@ -73,7 +73,7 @@ User edits/accepts memo
 - Upsert `memos` (body, geminiSuggestion, updatedAt).
 - Update `memory_items.isFavorite`.
 - Update `memory_items.deletedAt` for soft-delete (trash).
-- Delete linked rows (OCR, Vision labels, classifications, tags, memo, image file) on permanent delete.
+- Delete linked rows (OCR, Vision labels, classifications, YouTube link, tag refs, memo, image file) on permanent delete.
 
 ## API Interaction
 

@@ -38,7 +38,9 @@ com.example.snapmind
 │   ├── repository
 │   └── file
 ├── worker
-│   ├── MemoryProcessingWorker.kt
+│   ├── LocalMemoryProcessingWorker.kt
+│   ├── RemoteEnrichmentWorker.kt
+│   ├── AutoTaggingWorker.kt
 │   └── CleanupWorker.kt
 ├── domain
 │   ├── model
@@ -101,9 +103,9 @@ Repositories coordinate:
 - File persistence and URI copying.
 - OCR processor execution (ML Kit).
 - TFLite classifier execution.
-- Google Cloud Vision API calls (image labeling).
-- Gemini API calls (memo recommendation).
-- YouTube Data API v3 calls (video title search).
+- Optional Google Cloud Vision API calls (image labeling).
+- Optional Gemini API calls (memo recommendation).
+- Optional YouTube Data API v3 calls (video title search).
 - Auto-tag rule execution (OCR + TFLite + Vision labels).
 
 Repository interfaces live in `domain/repository`; implementations live in `data/repository`.
@@ -150,7 +152,7 @@ Common errors:
 
 ## Background Work
 
-Use WorkManager for durable OCR/classification/tagging work after import. See `docs/architecture/background-processing.md`.
+Use WorkManager for durable local processing, optional remote enrichment, tagging, and cleanup work after import. See `docs/architecture/background-processing.md`.
 
 ## Privacy Boundary
 

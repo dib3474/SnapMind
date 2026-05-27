@@ -29,6 +29,7 @@ Automatically generate useful tags from three sources — ML Kit OCR text, TFLit
 - De-duplicate tags case-insensitively across all sources.
 - Track tag source (`OCR` / `TFLITE` / `VISION` / `USER`).
 - Persist generated tags and user-added tags in `TagEntity` + `MemoryTagCrossRef`.
+- Store source metadata on `MemoryTagCrossRef.sourceTypes` so the same normalized tag can record multiple sources for the same memory.
 - Allow user to remove generated tags.
 - Allow user to create, rename, and delete user-managed tags.
 - Allow user to assign tags to memories from detail screen.
@@ -52,15 +53,16 @@ OCR result + TFLite result + Vision API labels
   → Tag de-duplication (case-insensitive)
   → Cap at max tag limit (20)
   → TagEntity upsert
-  → MemoryTagCrossRef insert
+  → MemoryTagCrossRef insert/update with sourceTypes
   → MemoryItem.taggingStatus = SUCCESS
 ```
 
 ## Database Interaction
 
 - Read `ocr_texts`, `classifications`, `vision_labels`.
-- Upsert `tags` (with source field).
+- Upsert `tags` by normalized name.
 - Insert/delete `memory_tag_cross_refs`.
+- Preserve generated-tag removals with `removedAt` so retry does not re-add tags the user removed.
 - Update user-managed tag metadata on create/rename/delete.
 - Update `memory_items.taggingStatus`.
 
@@ -104,7 +106,8 @@ OCR result + TFLite result + Vision API labels
 - [ ] Define TFLite category-to-tag mapping.
 - [ ] Implement Vision API label filtering (score threshold).
 - [ ] Implement tag de-duplication with source tracking.
-- [ ] Add tag DAO upsert with source field.
+- [ ] Add tag DAO upsert by normalized name.
+- [ ] Add `MemoryTagCrossRef.sourceTypes` and `removedAt` handling.
 - [ ] Add generated/user tag source tracking.
 - [ ] Add user tag create/rename/delete support.
 - [ ] Add manual tag assignment/removal support.

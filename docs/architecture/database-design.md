@@ -14,12 +14,13 @@ Define Room database entities, relationships, indexes, FTS configuration, and qu
 | --- | --- |
 | `MemoryItemEntity` | Main image memory record |
 | `OcrTextEntity` | ML Kit OCR full text and block-level extraction metadata |
-| `TagEntity` | Unique tag definitions (source: OCR / Vision API / TFLite / user) |
-| `MemoryTagCrossRef` | N:M relationship between memories and tags |
+| `TagEntity` | Unique normalized tag definitions |
+| `MemoryTagCrossRef` | N:M relationship between memories and tags, including assignment/source metadata |
 | `ClassificationEntity` | TFLite CNN category prediction results |
 | `VisionLabelEntity` | Google Cloud Vision API label results per memory |
 | `MemoEntity` | User-authored and Gemini-recommended memo content |
-| `MemoryFts` | FTS4/FTS5 virtual table over OCR text and memo text |
+| `YoutubeLinkEntity` | YouTube Data API result used by the detail deep-link button |
+| `MemorySearchFts` | FTS4 virtual table over OCR text, memo text, tags, categories, and YouTube title metadata |
 
 ## Relationships
 
@@ -27,6 +28,7 @@ Define Room database entities, relationships, indexes, FTS configuration, and qu
 - One `MemoryItemEntity` has zero or many `ClassificationEntity` rows.
 - One `MemoryItemEntity` has zero or many `VisionLabelEntity` rows.
 - One `MemoryItemEntity` has zero or one `MemoEntity`.
+- One `MemoryItemEntity` has zero or one `YoutubeLinkEntity`.
 - One `MemoryItemEntity` has many `TagEntity` rows through `MemoryTagCrossRef` (N:M).
 
 ## Key Fields
@@ -37,14 +39,42 @@ Define Room database entities, relationships, indexes, FTS configuration, and qu
 | --- | --- | --- |
 | `id` | Long PK | Auto-generated |
 | `imageUri` | String UNIQUE | App-private URI |
+| `sourceUri` | String? | Original shared URI for debug/source metadata; do not expose in release logs |
+| `mimeType` | String? | Validated imported MIME type |
+| `contentHash` | String? UNIQUE | Optional SHA-256 hash for duplicate detection |
 | `createdAt` | Long | Epoch millis |
+| `updatedAt` | Long | Epoch millis |
 | `ocrStatus` | Enum | PENDING / RUNNING / SUCCESS / FAILED |
 | `classificationStatus` | Enum | PENDING / RUNNING / SUCCESS / FAILED |
 | `visionLabelStatus` | Enum | PENDING / RUNNING / SUCCESS / FAILED / SKIPPED |
-| `geminiMemoStatus` | Enum | PENDING / RUNNING / SUGGESTED / ACCEPTED / DISMISSED / FAILED |
+| `geminiMemoStatus` | Enum | PENDING / RUNNING / SUGGESTED / ACCEPTED / DISMISSED / FAILED / SKIPPED |
+| `youtubeLinkStatus` | Enum | PENDING / RUNNING / SUCCESS / FAILED / SKIPPED |
 | `taggingStatus` | Enum | PENDING / RUNNING / SUCCESS / FAILED |
 | `isFavorite` | Boolean | Favorites tab filter |
 | `deletedAt` | Long? | Soft delete (trash); null = active |
+
+### TagEntity
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | Long PK | Auto-generated |
+| `name` | String UNIQUE | Normalized lowercase tag key |
+| `displayName` | String | UI label |
+| `isUserManaged` | Boolean | True for user-created/editable tags |
+| `isArchived` | Boolean | Hide from default drawer lists when true |
+| `createdAt` | Long | Epoch millis |
+| `updatedAt` | Long | Epoch millis |
+
+### MemoryTagCrossRef
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `memoryId` | Long FK | Composite PK |
+| `tagId` | Long FK | Composite PK |
+| `assignedBy` | Enum | AUTO / USER |
+| `sourceTypes` | String | Comma-separated enum set: OCR / TFLITE / VISION / USER / SYSTEM |
+| `removedAt` | Long? | Null means active; non-null preserves "user removed generated tag" history |
+| `createdAt` | Long | Epoch millis |
 
 ### VisionLabelEntity
 
@@ -54,6 +84,7 @@ Define Room database entities, relationships, indexes, FTS configuration, and qu
 | `memoryId` | Long FK | |
 | `label` | String | e.g. "Food", "Receipt" |
 | `score` | Float | Vision API confidence score |
+| `createdAt` | Long | Epoch millis |
 
 ### MemoEntity
 
@@ -64,16 +95,30 @@ Define Room database entities, relationships, indexes, FTS configuration, and qu
 | `geminiSuggestion` | String? | Gemini API recommendation; null if not available |
 | `updatedAt` | Long | |
 
+### YoutubeLinkEntity
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `memoryId` | Long PK/FK | |
+| `videoId` | String | YouTube video ID |
+| `title` | String? | API result title |
+| `url` | String | `https://www.youtube.com/watch?v={videoId}` |
+| `createdAt` | Long | Epoch millis |
+
 ## FTS Configuration
 
-Room FTS virtual table for fast full-text search:
+Room FTS virtual table for fast full-text search. Use a denormalized table so tag/category searches do not require fragile FTS joins:
 
 ```kotlin
-@Fts4(contentEntity = OcrTextEntity::class)
-@Entity(tableName = "memory_fts")
-data class MemoryFts(
-    val ocrFullText: String,
-    val memoBody: String
+@Fts4(notIndexed = ["memoryId"])
+@Entity(tableName = "memory_search_fts")
+data class MemorySearchFts(
+    val memoryId: Long,
+    val ocrText: String,
+    val memoBody: String,
+    val tagText: String,
+    val categoryText: String,
+    val youtubeTitle: String
 )
 ```
 
@@ -81,8 +126,11 @@ FTS supports searches across:
 
 - OCR full text
 - Memo body
+- Active tag display names
+- Top classification/category labels
+- YouTube title metadata
 
-Tag and category searches use standard `LIKE` or `IN` queries joining `TagEntity` and `ClassificationEntity`.
+The repository refreshes the FTS row in the same transaction that changes OCR text, memo body, tag assignments, classification rows, or YouTube link metadata. Exact tag/category filters still use indexed joins to avoid ambiguous text matches.
 
 ## Index Strategy
 
@@ -90,30 +138,32 @@ Tag and category searches use standard `LIKE` or `IN` queries joining `TagEntity
 | --- | --- | --- |
 | `memory_items` | `createdAt` | Date sorting |
 | `memory_items` | `imageUri` UNIQUE | Prevent duplicate imports |
+| `memory_items` | `contentHash` UNIQUE nullable | Detect duplicate imports after local copy |
 | `memory_items` | `deletedAt` | Trash / active filter |
 | `memory_items` | `isFavorite` | Favorites tab |
 | `ocr_texts` | `memoryId` UNIQUE | Fast join from memory |
 | `tags` | `name` UNIQUE | Tag lookup and de-duplication |
-| `tags` | `source`, `isArchived` | Tag management and popular tag lists |
+| `tags` | `isUserManaged`, `isArchived` | Tag management and popular tag lists |
 | `memory_tag_cross_refs` | `memoryId`, `tagId` | N:M joins |
-| `memory_tag_cross_refs` | `tagId` | Tag usage counts for top-3 shortcuts |
+| `memory_tag_cross_refs` | `tagId`, `removedAt` | Tag usage counts for top-3 shortcuts |
 | `classifications` | `memoryId`, `label` | Category filtering |
 | `classifications` | `label` | Drawer category counts |
 | `vision_labels` | `memoryId` | Join from memory |
 | `vision_labels` | `label`, `score` | High-confidence label lookup |
 | `memos` | `memoryId` UNIQUE | Detail screen memo loading |
+| `youtube_links` | `memoryId` UNIQUE | Detail deep-link lookup |
 
 ## Search Queries
 
 | Query Type | Strategy |
 | --- | --- |
-| Full-text (OCR + memo) | Room FTS `MATCH` query |
+| Full-text (OCR + memo + tags + category + YouTube title) | Room FTS `MATCH` query on `memory_search_fts` |
 | Tag filter | Join `memory_tag_cross_refs` + `tags` |
 | Category filter | Join `classifications` by `label` |
 | Date range | `WHERE createdAt BETWEEN ? AND ?` |
 | Favorites | `WHERE isFavorite = 1` |
 | Trash | `WHERE deletedAt IS NOT NULL` |
-| Top-3 tags | `GROUP BY tagId ORDER BY COUNT(*) DESC LIMIT 3` |
+| Top-3 tags | Active cross refs only: `removedAt IS NULL`, `GROUP BY tagId ORDER BY COUNT(*) DESC LIMIT 3` |
 
 ## Drawer Utility Queries
 

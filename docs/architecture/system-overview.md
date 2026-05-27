@@ -2,7 +2,7 @@
 
 ## Goal
 
-Define how SnapMind ingests image memories, processes them through a multi-step AI pipeline (OCR, TFLite classification, Vision API labeling, Gemini memo recommendation), stores structured metadata, and exposes retrieval/editing workflows through Android UI.
+Define how SnapMind ingests image memories, processes them through a multi-step AI pipeline (OCR, TFLite classification, optional Vision API labeling, optional Gemini memo recommendation), stores structured metadata, and exposes retrieval/editing workflows through Android UI.
 
 ## High-Level Components
 
@@ -16,8 +16,8 @@ Define how SnapMind ingests image memories, processes them through a multi-step 
 | File Storage | Stores copied image files in app-private storage |
 | ML Kit OCR | Extracts text from screenshots/photos on-device |
 | TensorFlow Lite | Performs on-device image classification (self-trained CNN) |
-| Google Cloud Vision API | Generates visual object/scene labels for auto-tagging |
-| Gemini API | Recommends memo text based on image content |
+| Google Cloud Vision API | Optional remote enrichment that generates visual object/scene labels for auto-tagging |
+| Gemini API | Optional remote enrichment that recommends memo text based on image content |
 | YouTube Data API v3 | Searches for video by title extracted via OCR; returns deep link |
 | Glide | Thumbnail image loading with disk cache |
 | WorkManager | Runs durable OCR/classification/API work after import |
@@ -29,11 +29,11 @@ Define how SnapMind ingests image memories, processes them through a multi-step 
 2. App validates image MIME type and copies it to app-private storage.
 3. Repository creates a `MemoryItem` (status: pending) and enqueues processing.
 4. Background coroutine runs ML Kit OCR and TFLite classification.
-5. Vision API call generates visual labels for auto-tagging.
-6. Gemini API call recommends a memo sentence; user accepts or edits.
+5. If remote enrichment is enabled, Vision API generates visual labels for auto-tagging.
+6. If memo recommendation is enabled, Gemini API recommends a memo sentence; user accepts or edits.
 7. If category is `youtube`, OCR title triggers a YouTube Data API search and deep-link button.
 8. All results are confirmed in Room DB with FTS index; item becomes searchable.
-9. User searches, filters, edits memo content, favorites, or deletes/archives items.
+9. User searches, filters, edits memo content, favorites, sends items to trash, restores, or permanently deletes them.
 
 ## Processing Pipeline
 
@@ -43,8 +43,8 @@ Define how SnapMind ingests image memories, processes them through a multi-step 
   → Room insert (pending)
   → ML Kit OCR         [Coroutine · IO dispatcher]
   → TFLite classify    [Coroutine · Default dispatcher]
-  → Vision API label   [Retrofit · IO dispatcher]
-  → Gemini memo hint   [Retrofit · IO dispatcher]
+  → Vision API label   [Retrofit · IO dispatcher · if enabled]
+  → Gemini memo hint   [Retrofit · IO dispatcher · if enabled]
   → YouTube deeplink   [Retrofit · IO dispatcher · if youtube category]
   → Room confirm       [FTS indexed]
 ```
@@ -63,9 +63,9 @@ Define how SnapMind ingests image memories, processes them through a multi-step 
 - Room is the source of truth for all UI state.
 - Processing status is persisted so interrupted work can resume.
 - Full-text search works offline via Room FTS.
-- External API calls (Vision, Gemini, YouTube) degrade gracefully when offline.
+- External API calls (Vision, Gemini, YouTube) are optional, require configured API settings, and degrade gracefully when offline.
 - App must handle revoked URI permissions and missing files gracefully.
-- Imported image files and OCR text are private by default; raw images are not sent to external services.
+- Imported image files and OCR text are private by default. Downsampled image payloads are sent only for user-enabled Vision/Gemini enrichment, and OCR-derived YouTube search text is sent only for the YouTube feature.
 
 ## Related Documents
 

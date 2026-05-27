@@ -19,13 +19,13 @@ Intent flow:
 
 ### Purpose
 
-Provide tab-based access to core SnapMind features with `ViewPager2` and `BottomNavigationView`, plus a right-side `DrawerLayout` for utility actions.
+Provide tab-based access to core SnapMind features with `ViewPager2` and `BottomNavigationView`, plus a left-side `DrawerLayout` for utility actions.
 
 ### UI Elements
 
 - `ViewPager2` occupying the main content area.
 - `BottomNavigationView` fixed to the bottom of the screen (4 tabs).
-- `DrawerLayout` on the right side, opened from toolbar menu icon.
+- `DrawerLayout` on the left side (`layout_gravity="start"`), opened from toolbar menu icon.
 - **Search button** at the top-right of the home (홈) tab toolbar.
 - **FAB (+)** at the bottom-right for uploading a new image.
 
@@ -57,15 +57,15 @@ Provide tab-based access to core SnapMind features with `ViewPager2` and `Bottom
 
 ---
 
-## Right-Side Drawer Menu (DrawerLayout)
+## Left-Side Drawer Menu (DrawerLayout)
 
 ### Purpose
 
-Provide utility actions and quick navigation from a right-side sliding panel.
+Provide utility actions and quick navigation from a left-side sliding panel that opens left-to-right in LTR layouts.
 
 ### UI Elements
 
-- Drawer opened from toolbar menu icon (right side).
+- Drawer opened from toolbar menu icon or left-edge swipe.
 - Menu items:
   - 🗑 **휴지통** — view and restore deleted memories
   - 📄 **PDF로 추출하기** — export selected memories as PDF
@@ -74,7 +74,7 @@ Provide utility actions and quick navigation from a right-side sliding panel.
 
 ### Behavior
 
-- Opens by swiping from the right edge or tapping toolbar icon.
+- Opens by swiping from the left edge or tapping toolbar icon.
 - Tapping "인기 태그 TOP 3 바로가기" navigates to 태그별 사진 tab filtered by each top tag.
 - Drawer closes after selection.
 
@@ -144,7 +144,8 @@ Configure app behavior.
 
 ### UI Elements
 
-- API key management (Vision, Gemini, YouTube).
+- Remote enrichment status and API configuration health (Vision, Gemini, YouTube).
+- Vision visual tagging toggle.
 - Gemini memo recommendation toggle.
 - YouTube deep-link toggle.
 - Processing retry settings.
@@ -186,7 +187,7 @@ Show image, OCR text, classification, Vision labels, tags, editable memo, and Yo
 
 - Full image preview.
 - Memo editor with Gemini recommendation chip (if available).
-- Tag chips (OCR + Vision + user tags).
+- Tag chips (OCR + TFLite + optional Vision + user tags).
 - Category row (TFLite result + confidence).
 - OCR text section (collapsible).
 - **▶ 영상 바로 이동** button (visible when category == youtube and YouTube API returned result).

@@ -41,8 +41,8 @@ This project is evaluated on the following criteria:
 - Store image memories locally with reliable file/URI handling.
 - Extract OCR text with ML Kit.
 - Classify image category with TensorFlow Lite CNN (trained from scratch).
-- Generate visual tags with Google Cloud Vision API.
-- Auto-recommend memo text via Gemini API.
+- Generate visual tags with Google Cloud Vision API when remote enrichment is enabled.
+- Auto-recommend memo text via Gemini API when remote enrichment is enabled.
 - Navigate to YouTube videos from YouTube screenshot thumbnails using YouTube Data API v3.
 - Search by OCR text, memo text, tag, category, and date (Room FTS).
 - Provide fast navigation with `ViewPager2`, `BottomNavigationView`, and `DrawerLayout`.
@@ -53,13 +53,13 @@ This project is evaluated on the following criteria:
 | Area | Included |
 | --- | --- |
 | Import | `ACTION_SEND`, app-private image copy, import confirmation |
-| Navigation | `ViewPager2`, bottom navigation (4 tabs), right-side DrawerLayout |
+| Navigation | `ViewPager2`, bottom navigation (4 tabs), left-side DrawerLayout |
 | OCR | ML Kit text recognition, normalized text persistence |
 | Classification | Self-trained TFLite CNN, category confidence storage |
-| Vision Tagging | Google Cloud Vision API visual label generation |
-| Memo Recommendation | Gemini API auto-recommend memo, user accept/edit |
+| Vision Tagging | Google Cloud Vision API visual label generation when enabled |
+| Memo Recommendation | Gemini API auto-recommend memo when enabled, user accept/edit |
 | YouTube Integration | ML Kit OCR title extraction + YouTube Data API v3 deep link |
-| Tags | Auto-generated tags (OCR + Vision API), user tags, tag create/rename/delete |
+| Tags | Auto-generated tags (OCR + TFLite + optional Vision API), user tags, tag create/rename/delete |
 | Search | Room FTS query by OCR/memo/tag/category/date |
 | Memo | Edit memo, favorites, delete memory |
 | Storage | Local Room DB and app-private image files |
@@ -107,7 +107,7 @@ Jetpack components used (4개 · 30점):
 
 - `Fragment` — each tab managed independently
 - `ViewPager2` — swipe between tabs
-- `DrawerLayout` — right-side slide menu
+- `DrawerLayout` — left-side slide menu (`layout_gravity="start"`)
 - `RecyclerView` — gallery grid and search result list
 
 Implementation docs:
@@ -116,9 +116,9 @@ Implementation docs:
 - `docs/specs/navigation-flow.md`
 - `docs/specs/screen-specs.md`
 
-### 3. Right-Side Drawer (DrawerLayout · Jetpack)
+### 3. Left-Side Drawer (DrawerLayout · Jetpack)
 
-The app uses `DrawerLayout` as a right-side utility menu accessible from the main toolbar.
+The app uses `DrawerLayout` as a left-side utility menu accessible from the main toolbar. In Android terms, this should be implemented as a `START` drawer (`layout_gravity="start"`), so it slides from left to right in LTR layouts.
 
 Drawer menu items:
 
@@ -147,7 +147,7 @@ Implementation docs:
 
 A self-trained CNN model (bundled as TFLite asset) classifies images into categories. Confidence score is stored with each result.
 
-Categories: `chat` · `receipt` · `code` · `shopping` · `travel` · `food` · `document`
+Categories: `chat` · `receipt` · `code` · `shopping` · `travel` · `food` · `document` · `youtube` · `unknown`
 
 Implementation docs:
 
@@ -156,7 +156,7 @@ Implementation docs:
 
 ### 6. Google Cloud Vision API — Image Labeling (API 2/3)
 
-Vision API analyzes objects, scenes, and visual elements to generate precise auto-tags. Combined with ML Kit OCR to provide both text-based and vision-based tags simultaneously.
+Vision API analyzes a downsampled copy of the image to generate precise auto-tags. This is a remote enrichment feature: the core app remains usable without it, and the request is sent only when API configuration exists and the user has enabled remote enrichment.
 
 Implementation docs:
 
@@ -165,7 +165,7 @@ Implementation docs:
 
 ### 7. Gemini API — Memo Auto-Recommendation (API 1/3)
 
-When an image is saved, Gemini API analyzes the image content and recommends a memo sentence explaining "why it was saved." The user can accept the recommendation or edit it freely.
+When an image is saved and remote memo recommendation is enabled, Gemini API analyzes a downsampled copy of the image and recommends a memo sentence explaining "why it was saved." The user can accept the recommendation or edit it freely.
 
 Implementation docs:
 
@@ -183,7 +183,7 @@ Implementation docs:
 
 ### 9. Room DB — Local-First Storage (DB · 30점)
 
-`MemoryItem` · `Tag` · N:M mapping table with Room FTS index for fast full-text search across OCR text, memo text, and tags.
+`MemoryItem` · OCR · classification · Vision labels · memo · YouTube link · `Tag` · N:M mapping tables, plus a denormalized Room FTS table for fast full-text search across OCR text, memo text, tags, and category labels.
 
 Implementation docs:
 
@@ -196,7 +196,7 @@ Glide loads and caches hundreds of thumbnails efficiently in the RecyclerView ga
 
 ### 11. Auto-Tagging and Tag Management
 
-Tags are generated from three sources: OCR keyword extraction, TFLite classification label, and Google Cloud Vision API visual labels. Users can also create, rename, delete, assign, and remove tags.
+Tags are generated from OCR keyword extraction, TFLite classification labels, and optional Google Cloud Vision API visual labels. Users can also create, rename, delete, assign, and remove tags.
 
 Implementation docs:
 
@@ -204,7 +204,7 @@ Implementation docs:
 
 ### 12. Search and Filter (Room FTS)
 
-Full-text search via Room FTS index across OCR text, memo text, tag names, and classification labels. Supports date range filtering.
+Full-text search via a denormalized Room FTS index across OCR text, memo text, tag names, classification labels, and YouTube title metadata. Supports date range filtering.
 
 Implementation docs:
 
@@ -262,7 +262,7 @@ Primary architecture docs:
 | OCR | ML Kit Text Recognition |
 | ML | TensorFlow Lite (self-trained CNN) |
 | Image Loading | Glide (disk cache, thumbnail) |
-| APIs | Gemini API · Google Cloud Vision API · YouTube Data API v3 |
+| APIs | Gemini API · Google Cloud Vision API · YouTube Data API v3 (remote enrichment, graceful fallback) |
 | Network | Retrofit + Kotlinx Serialization |
 | DI | Hilt |
 | Background Work | Coroutine (foreground), WorkManager (durable processing) |
@@ -277,26 +277,26 @@ Primary architecture docs:
   → MemoryItem insert (Room · pending)
   → OCR extraction (ML Kit · Coroutine background)
   → TFLite classification (CNN · Coroutine background)
-  → Vision API labeling (Google Cloud Vision · Retrofit)
-  → Gemini API memo recommendation (auto-suggest to user)
+  → Vision API labeling (Google Cloud Vision · Retrofit · if remote enrichment enabled)
+  → Gemini API memo recommendation (auto-suggest to user · if enabled)
   → YouTube title match (if category == youtube · YouTube Data API)
   → Room DB confirm (FTS indexed · searchable)
 ```
 
-OCR → TFLite → Vision API → Gemini API steps run on Coroutine background dispatchers and do not block the UI thread.
+OCR → TFLite → optional Vision API → optional Gemini API steps run on Coroutine background dispatchers and do not block the UI thread.
 
 ## Implementation Order
 
 1. Project package structure and dependency setup (Hilt, Room, Retrofit, Glide, TFLite, ML Kit).
 2. Room schema v1 with FTS virtual table and DAOs.
-3. App-private image storage and import flow (ShareActivity → MainAcitvity).
-4. Main app shell: ViewPager2 (4 tabs), BottomNavigationView, DrawerLayout (right-side).
+3. App-private image storage and import flow (ShareActivity → MainActivity).
+4. Main app shell: ViewPager2 (4 tabs), BottomNavigationView, DrawerLayout (left-side / START).
 5. OCR processing pipeline (ML Kit, Coroutine).
 6. TFLite classification pipeline (self-trained CNN).
 7. Google Cloud Vision API integration (auto-tagging).
 8. Gemini API integration (memo auto-recommendation).
 9. YouTube Data API integration (deep-link button on YouTube screenshots).
-10. Auto-tagging (OCR + Vision API + TFLite labels).
+10. Auto-tagging (OCR + TFLite labels + optional Vision API labels).
 11. Glide image loading with processing status overlays.
 12. Search/filter with Room FTS.
 13. Memo edit, favorites, delete.
@@ -314,7 +314,7 @@ OCR → TFLite → Vision API → Gemini API steps run on Coroutine background d
 | Network unavailable when API is called | Feature unavailable | Queue API calls or skip with offline indicator |
 | TFLite model classification accuracy | Wrong category tags | Provide category correction in detail screen |
 | Tag noise from Vision API | Search/filter quality drops | Cap generated tags and allow user removal |
-| Sensitive OCR text exposure | Privacy issue | Keep processing local for OCR; no raw image sent to APIs |
+| Sensitive OCR text exposure | Privacy issue | Keep OCR local, redact logs, and send only minimized remote payloads after user-enabled API settings |
 
 ## Documentation Maintenance
 

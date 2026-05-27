@@ -15,17 +15,17 @@ Allow users to quickly find saved memories by OCR text, memo text, tag, category
 ### Drawer Quick Filter Scenario
 
 1. User opens the Memory page.
-2. User swipes from the left edge to open the drawer.
+2. User opens the left-side drawer from the toolbar or left edge.
 3. User taps `Code` in the category list.
 4. Memory list immediately shows only `Code` screenshots/photos.
 5. User clears the active filter chip to return to all memories.
 
 ## Functional Requirements
 
-- Search OCR full text.
-- Search memo text.
-- Search tag names.
-- Search classification labels.
+- Search OCR full text through Room FTS.
+- Search memo text through Room FTS.
+- Search tag names through the denormalized Room FTS row and exact tag filters.
+- Search classification labels through the denormalized Room FTS row and exact category filters.
 - Filter by category.
 - Filter by one or more tags.
 - Apply category/tag filters from `DrawerLayout` quick filter menu.
@@ -79,10 +79,11 @@ Drawer category/tag selection
 
 ## Database Interaction
 
+- Query `memory_search_fts` for free-text search.
 - Query `memory_items`.
 - Join `ocr_texts`, `memos`, `classifications`, `tags`, `memory_tag_cross_refs`.
 - Query tag/category counts for drawer display.
-- Use indexes from `database-design.md`.
+- Use indexes and the denormalized FTS refresh rules from `database-design.md`.
 
 ## API Interaction
 
@@ -132,7 +133,7 @@ Uses OCR/classification/tag results already stored in Room. Does not run AI proc
 - [ ] Add empty/error states.
 - [ ] Add date range filtering.
 - [ ] Add tests for combined filters.
-- [ ] Consider FTS migration after baseline search works.
+- [ ] Refresh `memory_search_fts` after OCR/memo/tag/classification/YouTube metadata changes.
 
 ## Current Status
 
@@ -140,7 +141,7 @@ Not Started
 
 ## Progress Notes
 
-- Start with SQL `LIKE`; move to FTS only when dataset size or ranking requires it.
+- Start with Room FTS in schema v1 because the project plan requires searchable OCR, memo, tag, and category text.
 
 ## Future Improvements
 

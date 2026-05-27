@@ -49,7 +49,7 @@
 - [ ] Drawer category/tag quick filtering.
 - [ ] Screenshot share import.
 - [ ] OCR extraction.
-- [ ] Search by OCR text.
+- [ ] Search by OCR text with Room FTS baseline.
 
 ### P1
 
@@ -61,8 +61,8 @@
 
 ### P2
 
-- [ ] Remote model config API.
-- [ ] FTS search migration.
+- [ ] Remote API settings/status UI.
+- [ ] FTS ranking improvements.
 - [ ] Batch import background notification.
 - [ ] Model update strategy.
 - [ ] Optional backup/export policy.

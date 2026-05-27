@@ -8,7 +8,7 @@ Classify imported screenshots/photos into useful categories so users can filter 
 
 1. User saves an image to SnapMind.
 2. App processes the image in the background.
-3. App assigns a category such as `receipt`, `chat`, `document`, `product`, `travel`, or `unknown`.
+3. App assigns a category such as `receipt`, `chat`, `document`, `youtube`, `travel`, or `unknown`.
 4. User filters the memory list by category.
 
 ## Functional Requirements
@@ -19,6 +19,7 @@ Classify imported screenshots/photos into useful categories so users can filter 
 - Mark classification status as `SUCCESS` or `FAILED`.
 - Allow retry from memory detail screen when classification fails.
 - Use `unknown` when confidence is below threshold.
+- Use `youtube` when a screenshot appears to be a YouTube/video page; this gates YouTube Data API deep-link lookup.
 
 ## Non-Functional Requirements
 
@@ -60,7 +61,7 @@ MemoryItem pending classification
 
 ## API Interaction
 
-No API dependency for initial release. Future remote model config may use `ModelConfigApi`.
+No API dependency for initial release. Future model update/config features should be specified separately before adding a new API.
 
 ## AI/OCR Logic
 

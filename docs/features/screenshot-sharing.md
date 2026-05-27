@@ -21,7 +21,7 @@ Allow users to send screenshots/photos into SnapMind from Android share sheet an
 - Copy shared content into app-controlled storage unless persistent access is guaranteed.
 - Create one `MemoryItemEntity` per imported image.
 - Queue OCR, classification, and auto-tagging after successful persistence.
-- Prevent duplicate imports by checking normalized `imageUri` or file hash when available.
+- Prevent duplicate imports by checking `contentHash` when available; `imageUri` is still unique but cannot catch duplicate app-private copies by itself.
 
 ## Non-Functional Requirements
 
@@ -61,7 +61,7 @@ Share Intent
 
 - Insert into `memory_items`.
 - Initialize processing status columns.
-- Optionally insert source metadata if supported later.
+- Store `sourceUri`, `mimeType`, and optional `contentHash` metadata.
 
 ## API Interaction
 
@@ -110,7 +110,7 @@ This feature does not run OCR directly. It triggers processing through the impor
 - [ ] Create `ImportMemoryUseCase`.
 - [ ] Insert `MemoryItemEntity` with pending statuses.
 - [ ] Trigger processing queue after save.
-- [ ] Handle duplicate imports.
+- [ ] Compute/store optional content hash and handle duplicate imports.
 - [ ] Add single-image import tests.
 - [ ] Add batch import tests.
 

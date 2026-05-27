@@ -10,12 +10,12 @@ The first release should classify broad memory categories:
 
 - `chat`
 - `receipt`
-- `document`
-- `product`
+- `code`
+- `shopping`
 - `travel`
 - `food`
-- `event`
-- `code`
+- `document`
+- `youtube`
 - `unknown`
 
 ## Android Runtime Contract
@@ -64,4 +64,3 @@ image_classifier_labels_v1_0_0.txt
 ```
 
 Record model version in every `ClassificationEntity`.
-

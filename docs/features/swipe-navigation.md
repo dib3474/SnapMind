@@ -24,18 +24,17 @@ This feature defines the main app shell used after launch. It should make freque
 - Preserve current page after configuration changes.
 - Use stable page order and stable navigation item IDs.
 - Disable or guard swipe only for pages where a child component requires horizontal gestures.
-- Reserve left-edge swipe on the Memory page for `DrawerLayout` quick filtering.
+- Guard left-edge gestures so the left-side `DrawerLayout` can open without fighting normal pager swipes.
 - Detail/import screens should open above the main pager instead of becoming pager pages.
 
 ## Main Pages
 
 | Page Index | Bottom Nav Item | Feature Area | Route/Screen |
 | ---: | --- | --- | --- |
-| 0 | Memory | Saved screenshots/photos | `memoryList` |
-| 1 | Search | Search and filters | `search` |
-| 2 | Tags | Tag/category browsing | `tagBrowser` |
-| 3 | Memo | Pinned/recent memos | `memoHub` |
-| 4 | Settings | App/model/debug settings | `settings` |
+| 0 | 홈 | Saved screenshots/photos | `home` |
+| 1 | 즐겨찾기 | Favorited memories | `favorites` |
+| 2 | 태그별 사진 | Tag/category browsing | `tagBrowser` |
+| 3 | 설정 | App/API/storage settings | `settings` |
 
 ## Non-Functional Requirements
 
@@ -52,18 +51,18 @@ This feature defines the main app shell used after launch. It should make freque
   - `ViewPager2`
   - `BottomNavigationView`
 - Pager adapter
-  - memory list page
-  - search page
+  - home memory list page
+  - favorites page
   - tag browser page
-  - memo hub page
   - settings page
 - Overlay/navigation destination
   - import preview
   - memory detail
+  - search screen
   - filter bottom sheet
   - delete confirmation dialog
-- Memory page drawer
-  - `DrawerLayout` for category/tag quick filters
+- Left-side drawer
+  - `DrawerLayout` for utility actions and top tag shortcuts
 
 ## Processing Flow
 
@@ -92,7 +91,7 @@ No direct API interaction. Child pages own their remote/local data requirements.
 
 ## AI/OCR Logic
 
-No direct AI/OCR logic. Processing status is displayed by child pages such as Memory and Search.
+No direct AI/OCR logic. Processing status is displayed by child pages/screens such as Home and Search.
 
 ## Error Handling
 
@@ -107,7 +106,7 @@ No direct AI/OCR logic. Processing status is displayed by child pages such as Me
 ## Edge Cases
 
 - User swipes while a bottom sheet is open.
-- User swipes from the left edge while on Memory page.
+- User swipes from the left edge while on the main pager.
 - User taps bottom navigation repeatedly on the current page.
 - User opens detail from Search and presses back.
 - User rotates device while on a non-default page.
@@ -124,14 +123,14 @@ No direct AI/OCR logic. Processing status is displayed by child pages such as Me
 ## TODO Checklist
 
 - [ ] Add `androidx.viewpager2:viewpager2` dependency.
-- [ ] Define bottom navigation menu item IDs.
+- [ ] Define 4 bottom navigation menu item IDs.
 - [ ] Create main pager layout with `ViewPager2` and `BottomNavigationView`.
 - [ ] Implement pager adapter.
 - [ ] Map bottom nav item IDs to pager indexes.
 - [ ] Register `ViewPager2.OnPageChangeCallback`.
 - [ ] Handle bottom nav item selection.
 - [ ] Preserve selected page with saved instance state or ViewModel state.
-- [ ] Define gesture priority between Memory drawer and pager swipe.
+- [ ] Define gesture priority between the left drawer and pager swipe.
 - [ ] Ensure detail/import screens are outside pager pages.
 - [ ] Add UI test for swipe updating bottom nav selection.
 - [ ] Add UI test for bottom nav tap updating pager page.

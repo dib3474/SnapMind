@@ -2,7 +2,7 @@
 
 ## Goal
 
-Define the full AI processing pipeline used to enrich imported image memories: on-device OCR and TFLite classification, followed by remote Vision API labeling and Gemini API memo recommendation.
+Define the full AI processing pipeline used to enrich imported image memories: on-device OCR and TFLite classification, followed by optional remote Vision API labeling and optional Gemini API memo recommendation.
 
 ## Pipeline Overview
 
@@ -14,9 +14,9 @@ Image URI
   → ML Kit text recognition          [on-device]
   → TFLite preprocessing
   → TFLite CNN inference             [on-device]
-  → Vision API label request         [remote · Retrofit]
-  → Gemini API memo recommendation   [remote · Retrofit]
-  → YouTube title search             [remote · Retrofit · if youtube category]
+  → Vision API label request         [remote · Retrofit · if enabled]
+  → Gemini API memo recommendation   [remote · Retrofit · if enabled]
+  → YouTube title search             [remote · Retrofit · if youtube category and enabled]
   → Tag rule engine (OCR + Vision + TFLite)
   → Room persistence (FTS indexed)
 ```
@@ -45,33 +45,36 @@ All steps run on Coroutine background dispatchers and do not block the UI thread
 5. Convert logits to category predictions.
 6. Store top category, confidence score, and top-N candidates.
 
-Categories: `chat` · `receipt` · `code` · `shopping` · `travel` · `food` · `document`
+Categories: `chat` · `receipt` · `code` · `shopping` · `travel` · `food` · `document` · `youtube` · `unknown`
 
 ## Vision API Flow (Google Cloud Vision)
 
-1. Encode resized image as base64 or send URI (per API requirement).
-2. POST to Vision API `annotate` endpoint with `LABEL_DETECTION` and `TEXT_DETECTION` features.
-3. Parse label annotations sorted by score.
-4. Map high-confidence labels to normalized tag strings.
-5. Merge with OCR-derived and TFLite-derived tags; de-duplicate.
-6. Persist tags in `TagEntity` + `MemoryTagCrossRef`.
+1. Confirm remote enrichment is enabled and an API key is configured.
+2. Decode a bounded bitmap and re-encode a downsampled JPEG/WebP payload for upload.
+3. POST to Vision API `annotate` endpoint with `LABEL_DETECTION` only.
+4. Parse label annotations sorted by score.
+5. Persist `VisionLabelEntity` rows for audit/debug.
+6. Map high-confidence labels to normalized tag strings.
+7. Merge with OCR-derived and TFLite-derived tags; de-duplicate.
+8. Persist tags in `TagEntity` + `MemoryTagCrossRef`.
 
 ## Gemini API Flow (Memo Recommendation)
 
-1. Send image (or description derived from OCR + classification) to Gemini API.
-2. Prompt: "이 이미지를 저장한 이유를 한 문장으로 추천해주세요."
+1. Confirm Gemini memo recommendation is enabled and an API key is configured.
+2. Send a downsampled image payload to Gemini API with a short prompt.
 3. Receive candidate memo sentence.
-4. Display recommendation in detail screen; user accepts, edits, or dismisses.
-5. Persist final memo in `MemoEntity`.
+4. Persist the suggestion in `MemoEntity.geminiSuggestion` and set `geminiMemoStatus = SUGGESTED`.
+5. Display recommendation in detail screen; user accepts, edits, or dismisses.
+6. Persist final memo in `MemoEntity.body`.
 
 ## YouTube Data API Flow
 
-Triggered only when TFLite category is `youtube` (or similar classifier output).
+Triggered only when TFLite category is `youtube` and YouTube search is enabled.
 
 1. ML Kit OCR extracts candidate video title from screenshot text.
-2. Send title as query to YouTube Data API v3 `search.list`.
+2. Send only the selected candidate title as query to YouTube Data API v3 `search.list`.
 3. Parse first result's `videoId`.
-4. Generate deep-link URL: `https://www.youtube.com/watch?v={videoId}`.
+4. Persist `YoutubeLinkEntity` with `videoId`, title, and URL.
 5. Display "▶ 영상 바로 이동" button in detail screen.
 6. Tapping opens YouTube app or browser via `Intent.ACTION_VIEW`.
 
@@ -84,6 +87,7 @@ Triggered only when TFLite category is `youtube` (or similar classifier output).
 | Normalize | Use model-specific mean/std from `ml-training-spec.md` |
 | Orientation | Apply EXIF rotation before OCR/classification |
 | Large Images | Downsample for AI/API processing; keep original stored reference |
+| Remote Payloads | Upload only bounded, re-encoded image bytes for Vision/Gemini; do not include OCR text or memo body in those requests |
 
 ## Auto-Tag Sources
 
@@ -105,7 +109,8 @@ Persist status on `MemoryItem`:
 | `ocrStatus` | `PENDING` · `RUNNING` · `SUCCESS` · `FAILED` |
 | `classificationStatus` | `PENDING` · `RUNNING` · `SUCCESS` · `FAILED` |
 | `visionLabelStatus` | `PENDING` · `RUNNING` · `SUCCESS` · `FAILED` · `SKIPPED` |
-| `geminiMemoStatus` | `PENDING` · `RUNNING` · `SUGGESTED` · `ACCEPTED` · `DISMISSED` · `FAILED` |
+| `geminiMemoStatus` | `PENDING` · `RUNNING` · `SUGGESTED` · `ACCEPTED` · `DISMISSED` · `FAILED` · `SKIPPED` |
+| `youtubeLinkStatus` | `PENDING` · `RUNNING` · `SUCCESS` · `FAILED` · `SKIPPED` |
 | `taggingStatus` | `PENDING` · `RUNNING` · `SUCCESS` · `FAILED` |
 
 ## Error and Degradation Strategy
@@ -117,6 +122,7 @@ Persist status on `MemoryItem`:
 | Vision API offline/error | Skip label generation; OCR + TFLite tags only |
 | Gemini API offline/error | Skip recommendation; user writes memo manually |
 | YouTube API offline/error | Hide deep-link button; show retry option |
+| Remote feature disabled | Mark the relevant status `SKIPPED`; local OCR/classification/tagging continues |
 
 ## Model Update Strategy
 

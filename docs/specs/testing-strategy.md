@@ -27,7 +27,7 @@ Define the minimum test coverage required for SnapMind features before they are 
 | AI Classification | Preprocessing dimensions, label mapping, confidence threshold, model failure |
 | Auto-Tagging | keyword rules, duplicate tags, user tag preservation, removed generated tag behavior |
 | Search and Filter | query by OCR/memo/tag/category/date, combined filters, empty result |
-| Memo Management | save, clear, pin, archive, delete transaction |
+| Memo Management | save, clear, favorite, trash, restore, permanent delete transaction |
 
 ## Test Data Policy
 
@@ -82,7 +82,7 @@ Avoid assertions tied to fragile animation timing. Wait for observable UI state.
 - [ ] Share a single screenshot from another app.
 - [ ] Share multiple images.
 - [ ] Deny/cancel import.
-- [ ] Open drawer with left-edge swipe.
+- [ ] Open drawer with toolbar button and left-edge swipe.
 - [ ] Select `Code` category and verify filtered list.
 - [ ] Create and assign a user tag.
 - [ ] Search by OCR text.
@@ -100,4 +100,3 @@ A feature is done when:
 - [ ] UI test exists for critical user flow or manual test reason is documented.
 - [ ] Bug tracker has no open S0/S1 bugs for the feature.
 - [ ] Related feature spec TODO checklist is updated.
-
