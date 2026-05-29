@@ -2,4 +2,15 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="snap_bg">#F6F7FB</color>
+    <color name="snap_surface">#FFFFFFFF</color>
+    <color name="snap_surface_soft">#EEF2FF</color>
+    <color name="snap_primary">#4F46E5</color>
+    <color name="snap_primary_dark">#3730A3</color>
+    <color name="snap_accent">#0F766E</color>
+    <color name="snap_rose">#E11D48</color>
+    <color name="snap_amber">#D97706</color>
+    <color name="snap_text">#111827</color>
+    <color name="snap_text_secondary">#64748B</color>
+    <color name="snap_outline">#E5E7EB</color>
 </resources>
