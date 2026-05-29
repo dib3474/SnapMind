@@ -17,9 +17,9 @@
 
 ### 👤 팀원 B — 앱 셸
 
-- [ ] Hilt DI 의존성 주입 설정 `CORE`
-- [ ] `#15` RecyclerView Grid 갤러리 기본 레이아웃 `UI`
-- [ ] ViewPager2 + BottomNavigationView 앱 셸 구현 `UI`
+- [x] Hilt DI 의존성 주입 설정 `CORE`
+- [x] `#15` RecyclerView Grid 갤러리 기본 레이아웃 `UI`
+- [x] ViewPager2 + BottomNavigationView 앱 셸 구현 `UI`
 
 ---
 
@@ -32,9 +32,9 @@
 
 ### 👤 팀원 B — 수집 UI
 
-- [ ] `#1` ACTION_SEND 외부 공유 수신 (ShareActivity 구현) `CORE`
-- [ ] `#2` 업로드 FAB — 갤러리 직접 선택 `UI`
-- [ ] `#16` 처리 상태 뱃지 UI (처리중 / 완료 / 에러) `UI`
+- [x] `#1` ACTION_SEND 외부 공유 수신 (ShareActivity 구현) `CORE`
+- [x] `#2` 업로드 FAB — 갤러리 직접 선택 `UI`
+- [x] `#16` 처리 상태 뱃지 UI (처리중 / 완료 / 에러) `UI`
 
 ---
 
@@ -51,10 +51,10 @@
 
 ### 👤 팀원 B — 외부 API
 
-- [ ] `#7` Google Cloud Vision API 이미지 라벨링 연동 `API`
-- [ ] `#8` Gemini API 메모 자동 추천 연동 `API`
-- [ ] `#10` YouTube API 영상 제목 검색 → videoId → 딥링크 `API`
-- [ ] Retrofit 공통 클라이언트 모듈화 및 에러 처리 `CORE`
+- [/] `#7` Google Cloud Vision API 이미지 라벨링 연동 `API` — Retrofit service / DTO 구현, 파이프라인 연동 대기
+- [/] `#8` Gemini API 메모 자동 추천 연동 `API` — Retrofit service / DTO 구현, 파이프라인 연동 대기
+- [/] `#10` YouTube API 영상 제목 검색 → videoId → 딥링크 `API` — Retrofit service / DTO 구현, OCR 후보 연동 대기
+- [x] Retrofit 공통 클라이언트 모듈화 및 에러 처리 `CORE`
 
 ---
 
@@ -69,12 +69,12 @@
 
 ### 👤 팀원 B — 탭 화면 UI
 
-- [ ] `#17` 홈 화면 우상단 검색 버튼 및 검색 UI `UI`
-- [ ] `#18` 카테고리/태그 필터 및 유틸리티 UI (DrawerLayout 좌측 메뉴) `UI`
-- [ ] `#21` 즐겨찾기 추가 / 해제 토글 UI `UI`
-- [ ] `#22` 즐겨찾기 탭 — 즐겨찾기 이미지 갤러리 화면 `UI`
-- [ ] `#23` 태그별 사진 탭 — 태그 목록 화면 `UI`
-- [ ] `#24` 태그 선택 시 이미지 필터링 연동 `UI`
+- [x] `#17` 홈 화면 우상단 검색 버튼 및 검색 UI `UI`
+- [x] `#18` 카테고리/태그 필터 및 유틸리티 UI (DrawerLayout 좌측 메뉴) `UI`
+- [x] `#21` 즐겨찾기 추가 / 해제 토글 UI `UI`
+- [x] `#22` 즐겨찾기 탭 — 즐겨찾기 이미지 갤러리 화면 `UI`
+- [x] `#23` 태그별 사진 탭 — 태그 목록 화면 `UI`
+- [x] `#24` 태그 선택 시 이미지 필터링 연동 `UI`
 
 ---
 
@@ -90,12 +90,12 @@
 
 ### 👤 팀원 B — 상세 · Drawer UI
 
-- [ ] `#27` 메모 작성 / 수정 UI `UI`
-- [ ] `#29` Gemini 메모 추천 결과 표시 및 수락 UI `UI`
-- [ ] `#30` YouTube 딥링크 버튼 UI (유튜브 스크린샷 한정) `UI`
-- [ ] `#31` 즐겨찾기 토글 UI `UI`
-- [ ] `#34` 개발자 소개 화면 `UI`
-- [ ] `#35` 인기 태그 TOP 3 바로가기 (Drawer 연동) `UI`
+- [x] `#27` 메모 작성 / 수정 UI `UI`
+- [x] `#29` Gemini 메모 추천 결과 표시 및 수락 UI `UI`
+- [x] `#30` YouTube 딥링크 버튼 UI (유튜브 스크린샷 한정) `UI`
+- [x] `#31` 즐겨찾기 토글 UI `UI`
+- [x] `#34` 개발자 소개 화면 `UI`
+- [x] `#35` 인기 태그 TOP 3 바로가기 (Drawer 연동) `UI`
 
 ---
 
@@ -112,10 +112,10 @@
 
 ### 👤 팀원 B — 안정성 · UI 마무리
 
-- [ ] `#40` DrawerLayout ↔ ViewPager2 제스처 충돌 해결 `안정성`
+- [x] `#40` DrawerLayout ↔ ViewPager2 제스처 충돌 해결 `안정성`
 - [ ] `#41` Room DB 마이그레이션 관리 `안정성`
-- [ ] Glide 썸네일 로딩 최적화 `UI`
-- [ ] 전체 UI 폴리싱 및 애니메이션 정리 `UI`
+- [x] Glide 썸네일 로딩 최적화 `UI`
+- [/] 전체 UI 폴리싱 및 애니메이션 정리 `UI` — 기본 UI polish 완료, 추가 애니메이션 정리 가능
 
 ---
 
@@ -123,10 +123,10 @@
 
 | Phase | 팀원 A | 팀원 B | 공동 |
 |---|---|---|---|
-| Phase 1 — 기반 세팅 | 0 / 3 | 0 / 3 | 0 / 2 |
-| Phase 2 — 이미지 수집 | 0 / 2 | 0 / 3 | — |
-| Phase 3 — AI 파이프라인 | 0 / 4 | 0 / 4 | 0 / 1 |
-| Phase 4 — 화면 구현 | 0 / 4 | 0 / 6 | — |
-| Phase 5 — 상세 화면 & Drawer | 0 / 3 | 0 / 6 | 0 / 1 |
-| Phase 6 — 안정성 & 마무리 | 0 / 4 | 0 / 4 | 0 / 1 |
-| **합계** | **0 / 20** | **0 / 26** | **0 / 5** |
+| Phase 1 — 기반 세팅 | 0 / 3 | 3 / 3 | 0 / 2 |
+| Phase 2 — 이미지 수집 | 0 / 2 | 3 / 3 | — |
+| Phase 3 — AI 파이프라인 | 0 / 4 | 1 / 4 | 0 / 1 |
+| Phase 4 — 화면 구현 | 0 / 4 | 6 / 6 | — |
+| Phase 5 — 상세 화면 & Drawer | 0 / 3 | 6 / 6 | 0 / 1 |
+| Phase 6 — 안정성 & 마무리 | 0 / 4 | 2 / 4 | 0 / 1 |
+| **합계** | **0 / 20** | **21 / 26** | **0 / 5** |
