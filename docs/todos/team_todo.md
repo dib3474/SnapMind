@@ -44,10 +44,10 @@
 
 ### 👤 팀원 A — ML · OCR
 
-- [ ] `#5` TFLite CNN 모델 학습 (Colab — 병렬 진행) `ML`
-- [ ] `#4` ML Kit OCR 비동기 텍스트 추출 구현 `CORE`
-- [ ] `#6` TFLite 앱 탑재 및 추론 결과 DB 업데이트 `ML`
-- [ ] `#9` 자동 태그 생성 룰 엔진 (OCR + Vision 결과 기반) `CORE`
+- [x] `#5` TFLite CNN 모델 학습 (Colab — 병렬 진행) `ML` — EfficientNetB0 기반 9개 클래스, app/src/main/assets/ 배치 완료
+- [x] `#4` ML Kit OCR 비동기 텍스트 추출 구현 `CORE`
+- [x] `#6` TFLite 앱 탑재 및 추론 결과 DB 업데이트 `ML` — LiteRT 1.0.1 런타임, labels.txt 동적 로드, EfficientNet 정규화 정렬
+- [x] `#9` 자동 태그 생성 룰 엔진 (OCR + Vision 결과 기반) `CORE`
 
 ### 👤 팀원 B — 외부 API
 
@@ -125,8 +125,8 @@
 |---|---|---|---|
 | Phase 1 — 기반 세팅 | 3 / 3 | 3 / 3 | 0 / 2 |
 | Phase 2 — 이미지 수집 | 2 / 2 | 3 / 3 | — |
-| Phase 3 — AI 파이프라인 | 0 / 4 | 1 / 4 | 0 / 1 |
+| Phase 3 — AI 파이프라인 | 4 / 4 | 1 / 4 | 0 / 1 |
 | Phase 4 — 화면 구현 | 0 / 4 | 6 / 6 | — |
 | Phase 5 — 상세 화면 & Drawer | 0 / 3 | 6 / 6 | 0 / 1 |
 | Phase 6 — 안정성 & 마무리 | 0 / 4 | 2 / 4 | 0 / 1 |
-| **합계** | **5 / 20** | **21 / 26** | **0 / 5** |
+| **합계** | **9 / 20** | **21 / 26** | **0 / 5** |

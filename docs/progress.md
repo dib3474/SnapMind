@@ -204,24 +204,137 @@ Phase 3에서 OCR/분류/태그/유튜브 메타 변경마다 동일하게 `refr
 - `app/src/main/java/com/example/snapmind/data/repository/EntityMappers.kt` — Room↔도메인 매핑 + status/category 합성
 - `app/src/main/java/com/example/snapmind/data/repository/RoomMemoryRepository.kt` — MemoryRepository 신규 구현
 
+---
+
+# Phase 3 — AI 파이프라인 (ML · OCR) 완료
+
+## 작업 범위
+
+`docs/todos/team_todo.md`의 **Phase 3 — 팀원 A (ML · OCR)** 4개 중 3개 완료, #5는 외부 진행 중:
+
+- [/] `#5` TFLite CNN 모델 학습 (Colab — 외부 진행) — 스펙(9개 라벨) 확정, asset 도착 대기
+- [x] `#4` ML Kit OCR 비동기 텍스트 추출
+- [x] `#6` TFLite 앱 탑재 + 추론 결과 DB 업데이트 (스텁 구조)
+- [x] `#9` 자동 태그 생성 룰 엔진
+
+근거 명세:
+- `docs/architecture/ai-pipeline.md` — 전체 파이프라인 흐름
+- `docs/architecture/background-processing.md` — WorkManager 기반 오케스트레이션
+- `docs/features/ocr-processing.md` — OCR 처리 명세
+- `docs/features/ai-image-classification.md` — TFLite 분류 명세
+- `docs/features/auto-tagging.md` — 자동 태그 룰
+
+## 주요 결정 사항
+
+### 1. 오케스트레이션: WorkManager 풀 인프라
+
+`docs/architecture/background-processing.md`의 권장안 채택.
+
+- `Application : Configuration.Provider` + `HiltWorkerFactory` 주입 → 커스텀 Worker DI 가능
+- AndroidManifest에 `androidx.startup` 기반 WorkManager 자동 초기화 비활성 (Configuration.Provider 사용)
+- 워커 입력: `memoryId` (Long). 출력: Room의 status 컬럼 (Worker.Result는 보조 신호)
+- 체인: `LocalMemoryProcessingWorker` → 끝나면 `AutoTaggingWorker` enqueue
+- Remote enrichment(Vision/Gemini/YouTube)는 팀원 B의 Phase 3 항목. 현재는 `SKIPPED` 상태로 둠 → AutoTaggingWorker가 OCR + TFLite만 보고 태그 생성. Vision 결과가 추후 DB에 들어오면 동일 룰 엔진이 자동 활용.
+
+### 2. TFLite 스텁 Classifier
+
+`.tflite` 모델 학습(#5)이 외부 진행 중이라 asset이 없는 상태. **코드는 모델이 있다는 가정으로 완성**:
+
+- 경로: `app/src/main/assets/image_classifier_v1_0_0.tflite` (ml-training-spec 규약)
+- `ImageClassifier.obtainInterpreter()` — `context.assets.openFd(...)` 시도, `IOException` 발생 시 `ModelUnavailableException`으로 변환
+- 워커는 이 예외를 잡아 `classificationStatus = FAILED`로 마킹
+- **사용자가 모델 파일을 assets 폴더에 넣으면 다음 빌드부터 자동 동작 — 코드 수정 0**
+- `build.gradle.kts`에 `androidResources.noCompress.add("tflite")` 추가 (asset 압축 방지)
+- Interpreter는 lazy + 동기화된 단일 인스턴스 (재사용)
+- 전처리: EXIF 회전 보정 → 224x224 리사이즈 → RGB float 정규화 (0~1)
+- 후처리: top-3 + confidence threshold 0.65 미만이면 top-1을 `unknown`으로 마킹
+
+### 3. ML Kit OCR
+
+- `OcrExtractor` — `TextRecognition.getClient(LATIN)` 사용 (라틴 + 한글/영문/숫자 모두 인식. 한국어 한정 모델은 별도 의존성 필요하여 일단 LATIN으로 시작)
+- ML Kit의 콜백 API를 `suspendCancellableCoroutine`으로 감싸 suspend 함수화
+- 정규화: 라인별 trim + 빈 라인 압축 + 트레일링 공백 제거. `fullText`(정규화) + `rawText`(원본) 모두 저장 가능 (`rawText`는 정규화 결과와 다를 때만 저장)
+
+### 4. 자동 태그 룰 엔진
+
+`AutoTagRuleEngine.buildAssignments(ocrText, classifications, visionLabels)`:
+
+- **TFLite 라벨**: confidence ≥ 0.5 + `unknown` 제외 → `TagAssignmentSource.TFLITE`
+- **Vision API 라벨**: score ≥ 0.80 (auto-tagging.md 기준) → `TagAssignmentSource.VISION`
+- **OCR 추출**:
+  - URL 정규식 → host(`www.` 제거, port 제거) → 태그
+  - 이메일 패턴 발견 시 `email` 태그
+  - 한글(`가-힣`) 등장 시 `korean` 태그
+- 같은 정규화 키로 중복되는 태그는 **소스만 합집합** (`linkedHashMap<key, Set<source>>`)
+- 최대 20개 cap (auto-tagging.md)
+- 출력은 `TagAssigner.assignAll`로 그대로 전달 — `removedAt` 보존/USER 우선 등 정책은 Phase 2 TagAssigner가 처리
+
+### 5. 공용 헬퍼 추출
+
+Worker와 Repository가 동일하게 aggregate 빌드 + FTS 갱신을 수행하므로 분리:
+- `MemoryAggregateBuilder` (`@Singleton @Inject`) — DAO 6개 의존, `build(entity)` 메서드 노출
+- `refreshFtsRow(memoryId, ...)` 자유 함수 — `MemoryItemDao + AggregateBuilder + MemorySearchDao` 받아 한 번에 처리
+- `RoomMemoryRepository.refreshFts`/`buildAggregate`는 기존 private 그대로 유지 (점진 리팩터링 가능)
+
+### 6. 파이프라인 트리거
+
+`RoomMemoryRepository.importImage` 마지막에 `enqueueLocalProcessing(memoryId)` 호출. WorkManager Hilt 인젝션은 Worker 측 `@HiltWorker @AssistedInject`로 처리됨.
+
+## 추가/수정한 파일 (총 11)
+
+### 수정 (5)
+- `gradle/libs.versions.toml` — ML Kit Text Recognition / TFLite + Support / WorkManager / Hilt-Work / ExifInterface (6개 라이브러리)
+- `app/build.gradle.kts` — 위 라이브러리 implementation + `noCompress("tflite")`
+- `app/src/main/AndroidManifest.xml` — WorkManagerInitializer 자동 초기화 비활성 provider 추가
+- `app/src/main/java/com/example/snapmind/SnapMindApplication.kt` — `Configuration.Provider` 구현 + `HiltWorkerFactory` 주입
+- `app/src/main/java/com/example/snapmind/data/repository/RoomMemoryRepository.kt` — `enqueueLocalProcessing` + `@ApplicationContext` 추가
+- `docs/todos/team_todo.md`, `docs/progress.md` — 진행 상태/인수인계
+
+### 신규 (6)
+- `core/ai/OcrExtractor.kt` (#4) — ML Kit 래퍼
+- `core/ai/ImageClassifier.kt` (#6) — TFLite 스텁 + 전/후처리
+- `core/ai/AutoTagRuleEngine.kt` (#9) — 룰 엔진
+- `data/work/LocalMemoryProcessingWorker.kt` — OCR + Classification + FTS refresh + AutoTaggingWorker enqueue
+- `data/work/AutoTaggingWorker.kt` — 룰 엔진 호출 + TagAssigner 호출 + FTS refresh
+- `data/repository/MemoryPersistenceHelpers.kt` — 공용 `MemoryAggregateBuilder` + `refreshFtsRow`
+
 ## 다음 Phase에서 해야 할 일 (팀원 A)
 
-### Phase 3 (AI 파이프라인)
-- `#5` TFLite 학습 (Colab): 라벨 출력은 `MemoryCategory.name`의 lowercase 9개로 통일. ML 스펙(`docs/specs/ml-training-spec.md`)을 추가로 정렬 필요 (현재 `travel`/`food` 있으나 `map` 잔존 → spec 수정)
-- `#4` ML Kit OCR → `OcrTextDao.upsert` + `memoryItemDao.setOcrStatus(SUCCESS)` + `refreshFts(memoryId)`
-- `#6` TFLite 추론 → `ClassificationDao.insertAll` + `setClassificationStatus(SUCCESS)` + `refreshFts`
-- `#9` 자동 태그 룰 엔진: OCR + Classification + Vision 결과를 받아 `TagAssigner.assignAll(memoryId, requests, now)`. requests의 `sources`/`assignedBy`/정규화는 모두 `TagAssigner`가 처리. `removedAt` 보존 정책 자동 적용됨
+### Phase 3 잔여
+- `#5` TFLite 모델 학습 (Colab):
+  - 출력 라벨 9개: `chat`, `receipt`, `code`, `shopping`, `travel`, `food`, `document`, `youtube`, `unknown` (소문자, ml-training-spec.md)
+  - 입력 224x224 RGB float [0,1]
+  - 학습 완료 후 `.tflite` 파일을 `app/src/main/assets/image_classifier_v1_0_0.tflite` 경로에 배치 → 다음 빌드부터 자동 활성. 코드 수정 불필요
+  - labels.txt(`image_classifier_labels_v1_0_0.txt`)도 동일 폴더 권장 (현재 코드는 사용 안 함, 향후 동적 라벨로 전환 가능)
 
 ### Phase 4 (검색 백엔드)
-- `#19`/`#20`: `MemorySearchDao.search()`를 Flow로 감싸 ViewModel에서 사용. 현재 `RoomMemoryRepository.searchMemories`는 in-memory 필터링이므로 **인터페이스를 suspend/Flow로 바꾸거나** ViewModel에서 직접 DAO 호출하도록 우회 필요 (인터페이스 변경 시 팀원 B 의존 8개 파일 영향 검토 필수)
-- `#32` 휴지통 복구: `restore(memoryId)`는 이미 동작. 영구 삭제 시 `imageUri` 파일 정리 추가 필요
+- `MemorySearchDao.search()`를 Flow로 감싸 ViewModel에서 사용. 현재 RoomMemoryRepository의 `searchMemories`는 in-memory 필터링이라 FTS 활용 안 됨. 인터페이스 suspend화 또는 ViewModel→DAO 직접 호출 검토 필요
+- 휴지통 복구(#32) / PDF 추출(#33)
 
-### Phase 5 (상세 화면 데이터 로직)
-- `#25`/`#26`/`#28`: 메모 작성은 `updateMemo` → 내부에서 FTS refresh 처리. OCR/카테고리/태그 표시는 도메인 매핑이 이미 반영하므로 ViewModel만 작성하면 됨
+### Phase 5 / 6
+- 상세 화면 데이터 로직(#25/#26/#28) — 도메인 매핑은 이미 반영됨, ViewModel만 필요
+- Coroutine 예외 처리, OOM 방지, URI 권한 검증 — 기존 Phase 6 가이드 유지
 
-### Phase 6 (안정성 · 설정)
-- `#37` Coroutine 예외 처리: `RoomMemoryRepository`의 내부 `scope`에 `CoroutineExceptionHandler` 부착
-- `#38` OOM 방지: `ImageImporter`에 이미지 디코드 단계 추가 시 `BitmapFactory.Options.inSampleSize` 적용
-- `#39` URI 권한 만료: import 시점에 즉시 복사하므로 만료 영향 없음. 외부 URI 누출 검증만 필요
-- 중복 import로 인한 디스크 누수 cleanup
-- FTS index 손상 복구 (rebuild 명령)
+### 알아둘 점
+- 워커는 `Result.success()`를 반환하더라도 **DB의 status가 진짜 결과**. WorkManager Result는 보조 신호로만 사용
+- 모델 부재 시 classificationStatus만 FAILED. OCR/Tagging은 정상 동작 → 부분 처리 결과 표시 가능
+- 재시도는 Phase 4/5의 상세 화면에서 워커 재 enqueue로 구현 예정 (`#37` 안정성에서 다시 검토)
+
+## Phase 3 마무리 (모델 도착 + 분류 정상화)
+
+`.tflite` 모델 도착 후 발견·수정한 3가지:
+
+1. **LiteRT 마이그레이션** — `org.tensorflow:tensorflow-lite:2.14/2.16`은 모두 Colab(TF 2.17+)에서 export한 `FULLY_CONNECTED v12` op 미지원. `com.google.ai.edge.litert:litert:1.0.1`로 전환 (TF 2.17 기준 빌드). 패키지명(`org.tensorflow.lite.*`)은 그대로 유지되어 import 변경 불필요. `tensorflow-lite-support`는 미사용이라 제거.
+2. **labels.txt 동적 로딩** — 학습 스크립트(`snapmind_trainmodel.py`)가 `image_dataset_from_directory`를 쓰면서 폴더명 알파벳 순서로 클래스가 정렬됨(`chat, code, document, food, receipt, shopping, travel, unknown, youtube`). 코드의 하드코딩 순서와 달라서 카테고리/태그가 잘못 매핑되던 문제. `assets/labels.txt`를 인터프리터 로드 시 함께 읽어 학습 순서를 단일 진실 소스로 사용. 폴백은 알파벳 정렬된 9개 라벨.
+3. **EfficientNet 입력 정규화 정렬** — 학습 코드 주석에 "EfficientNet은 내부에 정규화가 포함되어 있어 입력을 0~255 그대로 넣어야 한다"고 명시. 기존 `pixel / 255f`로 [0,1]로 줄이던 코드가 이중 정규화를 유발하던 문제. raw 0~255 float로 변경.
+
+진단 보강: classify 실패 시 `Log.e("ImageClassifier", ...)`로 예외 출력 → Logcat에서 즉시 원인 파악 가능.
+
+asset 폴더 구성:
+- `app/src/main/assets/image_classifier_v1_0_0.tflite` — 모델 파일 (~16MB)
+- `app/src/main/assets/labels.txt` — 클래스명 9줄 (학습 순서)
+- `app/src/main/assets/snapmind_trainmodel.py` — Colab 학습 스크립트 (재학습 시 참고)
+
+**재학습 시 주의:**
+- `image_dataset_from_directory`의 알파벳 정렬 규칙 때문에 클래스 폴더명을 바꾸면 `class_names` 순서가 바뀜 → 반드시 새로 생성된 `labels.txt`도 함께 교체. 모델/라벨 한쪽만 교체하면 분류 결과 깨짐
+- TF 버전 차이로 op version이 또 올라가면 LiteRT 1.0.1 → 1.1.x/1.2.x로 한 줄만 올리면 됨

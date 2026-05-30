@@ -33,3 +33,18 @@
 - 시드 데이터 6개 제거 → **첫 실행 시 홈/즐겨찾기/태그 Drawer 모두 빈 화면**. 이미지를 import해야 채워짐. ShareActivity/FAB import 흐름은 그대로 동작.
 - `importImage()`는 이제 영속화됨 (앱 종료 후에도 유지). 중복 import는 SHA-256 해시로 감지하여 같은 메모리 객체 반환.
 - 자동 태그는 Phase 3 AI 파이프라인 완료 전까지 `#Imported` 한 개만 붙음.
+
+---
+
+## Phase 3 — AI 파이프라인 (ML · OCR)
+
+**B 코드 직접 변경: 없음.**
+
+알아둘 점 (B의 UI 동작에 영향):
+
+- 이제 `importImage()` 직후 WorkManager가 OCR + TFLite 분류 + 자동 태그 파이프라인을 자동 실행. UI는 `MemoryRepository.memories` Flow를 그대로 구독하면 처리 진행에 따라 status·tags·ocrText·category가 점진적으로 채워짐.
+- `MemoryItem.processingStatus` 합성 규칙은 그대로 (Phase 2 결정 유지). 처음엔 `PROCESSING` → 모든 단계 완료 시 `DONE` → 단계 중 하나라도 실패하면 `ERROR`.
+- **TFLite 모델 도착·정상 동작 확인 (2026-05-30)** → `classificationStatus=SUCCESS`, `processingStatus=DONE`로 정상 마킹됨. 카테고리 Drawer / 자동 태그도 채워짐. 단, **모델 도착 전 import한 기존 메모리**는 `classificationStatus=FAILED`가 영구 박혀있어 ERROR로 표시됨 → 자동 재시도 로직은 Phase 6에서 추가 예정. 현재는 앱 데이터 삭제 또는 신규 import만 정상 표시.
+- `MemoryCategory`는 학습된 9개 클래스(`chat, code, document, food, receipt, shopping, travel, unknown, youtube`) 기반. TFLite 결과의 confidence가 0.65 미만이면 `UNKNOWN`. 라벨 순서는 `assets/labels.txt`에서 런타임 로드.
+- Application 클래스가 `Configuration.Provider`로 변경됨 + AndroidManifest에 `WorkManagerInitializer` 자동 초기화 제거 provider 추가됨. **B가 별도로 WorkManager 초기화 코드를 추가하면 안 됨** — 자동으로 `HiltWorkerFactory` 기반 설정 사용됨.
+- 실패한 처리에 대한 retry 액션 UI(상세 화면 등)는 Phase 5/6에서 함께 설계 예정. 현재는 import 시점 1회 실행만 됨.

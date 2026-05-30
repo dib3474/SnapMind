@@ -1,0 +1,9 @@
+chat
+code
+document
+food
+receipt
+shopping
+travel
+unknown
+youtube

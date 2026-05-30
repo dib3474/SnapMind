@@ -46,6 +46,9 @@ android {
         viewBinding = true
         buildConfig = true
     }
+    androidResources {
+        noCompress.add("tflite")
+    }
 }
 
 dependencies {
@@ -72,6 +75,12 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     kapt(libs.androidx.room.compiler)
+    implementation(libs.mlkit.text.recognition)
+    implementation(libs.litert)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    kapt(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.exifinterface)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
