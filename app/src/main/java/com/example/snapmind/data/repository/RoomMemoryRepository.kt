@@ -1,6 +1,10 @@
 package com.example.snapmind.data.repository
 
+import android.content.Context
 import android.net.Uri
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.example.snapmind.core.coroutine.DispatcherProvider
 import com.example.snapmind.core.image.ImageImporter
 import com.example.snapmind.core.result.AppError
@@ -21,6 +25,8 @@ import com.example.snapmind.data.model.CategoryCount
 import com.example.snapmind.data.model.MemoryCategory
 import com.example.snapmind.data.model.MemoryItem
 import com.example.snapmind.data.model.TagCount
+import com.example.snapmind.data.work.LocalMemoryProcessingWorker
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +42,7 @@ import kotlinx.coroutines.launch
 
 @Singleton
 class RoomMemoryRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val memoryItemDao: MemoryItemDao,
     private val ocrTextDao: OcrTextDao,
     private val memoDao: MemoDao,
@@ -174,10 +181,18 @@ class RoomMemoryRepository @Inject constructor(
         )
 
         refreshFts(memoryId)
+        enqueueLocalProcessing(memoryId)
 
         val stored = memoryItemDao.getById(memoryId)
             ?: return AppResult.Error(AppError.Unknown("memory missing after insert"))
         return AppResult.Success(buildAggregate(stored).toDomain())
+    }
+
+    private fun enqueueLocalProcessing(memoryId: Long) {
+        val request = OneTimeWorkRequestBuilder<LocalMemoryProcessingWorker>()
+            .setInputData(workDataOf(LocalMemoryProcessingWorker.KEY_MEMORY_ID to memoryId))
+            .build()
+        WorkManager.getInstance(context).enqueue(request)
     }
 
     override fun toggleFavorite(memoryId: Long) {
